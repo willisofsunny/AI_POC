@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Co-Agents：框架與互動平台原型</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Noto Sans TC', 'Inter', sans-serif; background-color: #f8f9fa; color: #343a40; }
+        .main-tab.active { border-bottom-color: #3b82f6; color: #3b82f6; font-weight: 700; }
+        .section-title { border-bottom: 2px solid #3b82f6; padding-bottom: 0.5rem; }
+        .agent-card, .task-card, .interaction-card { background-color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07); border: 1px solid #e9ecef; transition: all 0.3s ease; display: flex; flex-direction: column; }
+        .agent-card:hover, .task-card:hover, .interaction-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); border-color: #3b82f6; }
+        .state-box { background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 0.5rem; padding: 1.5rem; margin-top: 1rem; }
+        .scenario-step { border-left: 3px solid #adb5bd; padding-left: 1.5rem; position: relative; }
+        .scenario-step::before { content: ''; position: absolute; left: -9px; top: 0; width: 16px; height: 16px; border-radius: 50%; background-color: #f8f9fa; border: 3px solid #adb5bd; }
+        .scenario-step.assistant::before { border-color: #4dabf7; }
+        .scenario-step.analyst::before { border-color: #845ef7; }
+        .scenario-step.coach::before { border-color: #20c997; }
+        .scenario-step.guardian::before { border-color: #f76707; }
+        .agent-tag { display: inline-flex; align-items: center; padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: 600; font-size: 0.875rem; }
+        .tag-assistant { background-color: #e7f5ff; color: #1c7ed6; }
+        .tag-analyst { background-color: #f3f0ff; color: #7048e8; }
+        .tag-coach { background-color: #e6fcf5; color: #087f5b; }
+        .tag-guardian { background-color: #fff4e6; color: #d9480f; }
+        .module-tab.active { border-bottom-color: #3b82f6; color: #3b82f6; font-weight: 600; }
+        .matrix-cell { background-color: #ffffff; border-radius: 0.75rem; padding: 0.75rem; border: 1px solid #e9ecef; display: flex; flex-direction: column; gap: 0.75rem; min-height: 150px; }
+        .matrix-card { transition: all 0.3s ease; border: 1px solid #dee2e6; background-color: #fff; flex-grow: 1; display: flex; flex-direction: column; }
+        .matrix-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.07); border-color: #4dabf7; }
+        .role-btn.active { background-color: #3b82f6; color: white; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+        .role-tag { font-size: 0.75rem; padding: 0.125rem 0.5rem; border-radius: 9999px; font-weight: 500; width: 3rem; text-align: center; }
+        .role-HR { background-color: #fde2e4; color: #c9184a; border: 1px solid #ffacc2; }
+        .role-主管 { background-color: #dbeafe; color: #1e3a8a; border: 1px solid #a5b4fc; }
+        .role-員工 { background-color: #dcfce7; color: #166534; border: 1px solid #a7f3d0; }
+        
+        .state-tag { font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 0.25rem; font-weight: 700; }
+        .state-Presenting { background-color: #e7f5ff; color: #1971c2; }
+        .state-Eliciting { background-color: #fff9db; color: #f08c00; }
+        .state-Proposing { background-color: #e6fcf5; color: #2f9e44; }
+
+        .coagent-tag { font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 0.25rem; font-weight: 700; }
+        .coagent-Assistant { background-color: #e9ecef; color: #495057; }
+        .coagent-Analyst { background-color: #e7f5ff; color: #1971c2; }
+        .coagent-Coach { background-color: #fff0f6; color: #d6336c; }
+        .coagent-Guardian { background-color: #fff4e6; color: #d9480f; }
+        
+        .io-icon { width: 1rem; height: 1rem; margin-right: 0.25rem; flex-shrink: 0; }
+        .interactive-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; border: 2px solid #3b82f6 !important; }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } }
+        .modal-backdrop { background-color: rgba(0,0,0,0.5); transition: opacity 0.3s ease; }
+        .axis-label { display: flex; align-items: center; justify-content: center; font-weight: 700; color: #495057; text-align: center; height: 100%; }
+        .grid-container { display: grid; grid-template-columns: auto 1fr; gap: 1rem; }
+        .main-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+        .y-axis { display: grid; grid-template-rows: repeat(4, 1fr); gap: 1rem; }
+        .y-axis .axis-label { writing-mode: vertical-lr; }
+        .card-content { flex-grow: 1; }
+        .task-subtitle { font-weight: 700; margin-top: 1rem; margin-bottom: 0.5rem; color: #111827; }
+        .future-trends-btn { background-color: #2563eb; color: white; font-weight: 700; padding: 0.75rem 2rem; border-radius: 9999px; transition: background-color 0.3s ease; box-shadow: 0 4px 14px 0 rgb(0 118 255 / 39%); }
+        .future-trends-btn:hover { background-color: #1d4ed8; }
+        .modal-content-container { transform: scale(0.95); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease; }
+        .modal-open .modal-content-container { transform: scale(1); opacity: 1; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">HR Co-Agents</h1>
+            <p class="mt-4 text-xl text-gray-600">一個為次世代人資平台打造的 AI 互動設計框架與原型。</p>
+        </header>
+
+        <!-- Main Navigation Tabs -->
+        <div id="main-nav" class="flex justify-center border-b border-gray-300 mb-8">
+            <button data-view="tasks" class="main-tab text-lg py-3 px-6 text-gray-500 border-b-4 border-transparent transition-colors duration-300 active">HR 任務核心</button>
+            <button data-view="framework" class="main-tab text-lg py-3 px-6 text-gray-500 border-b-4 border-transparent transition-colors duration-300">AI Agents框架</button>
+            <button data-view="prototype" class="main-tab text-lg py-3 px-6 text-gray-500 border-b-4 border-transparent transition-colors duration-300">HR Co-Agents應用</button>
+        </div>
+
+        <!-- Content Views -->
+        <div id="content-views">
+            <!-- View 1: HR Tasks -->
+            <div id="tasks-view" class="view-content">
+                 <header class="text-center mb-16">
+                    <h1 class="text-4xl md:text-5xl font-bold text-gray-900">HR 智慧核心</h1>
+                    <p class="mt-4 text-xl text-gray-600">解構人力資源的四大工作任務，洞見 AI 協作新模式</p>
+                </header>
+
+                <section class="mb-16">
+                    <h2 class="text-3xl font-bold section-title mb-6">HR 任務類型分析：AI 如何賦能四類核心工作</h2>
+                    <p class="text-lg text-gray-700 mb-10">現代 HR 的工作可被歸納為四大核心類型。了解這些任務的本質，以及 AI 如何在其中扮演輔助角色，是推動人資數位轉型的關鍵第一步。</p>
+                    
+                    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        <!-- 檢索資料 -->
+                        <div class="task-card p-6">
+                            <div class="flex items-center mb-3">
+                                <i data-lucide="search" class="w-10 h-10 text-blue-500"></i>
+                                <h3 class="text-2xl font-bold ml-4">檢索資料</h3>
+                            </div>
+                            <div class="card-content">
+                                <p class="font-semibold text-blue-600 mb-3">Data Retrieval</p>
+                                <p class="text-gray-600 mb-4">核心是建立一個集中、可信賴的數據中心，讓所有決策都有跡可循。</p>
+                                <h4 class="task-subtitle">HRM 範疇:</h4>
+                                <ul class="list-disc list-inside text-sm space-y-2 text-gray-700">
+                                    <li>查詢員工基本資料、薪資與投保歷史。</li>
+                                    <li>調閱出缺勤紀錄、假期餘額。</li>
+                                </ul>
+                                <h4 class="task-subtitle">HRD 範疇:</h4>
+                                <ul class="list-disc list-inside text-sm space-y-2 text-gray-700">
+                                    <li>查詢員工的培訓紀錄與學習進度。</li>
+                                    <li>檢視歷史績效評估結果與目標。</li>
+                                    <li>搜尋符合特定職能的人才庫。</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <!-- 執行任務 -->
+                        <div class="task-card p-6">
+                            <div class="flex items-center mb-3">
+                                <i data-lucide="play-circle" class="w-10 h-10 text-green-500"></i>
+                                <h3 class="text-2xl font-bold ml-4">執行任務</h3>
+                            </div>
+                            <div class="card-content">
+                                <p class="font-semibold text-green-600 mb-3">Task Execution</p>
+                                <p class="text-gray-600 mb-4">將日常、重複性高的行政作業流程化、自動化，將 HR 從繁瑣庶務中解放。</p>
+                                <h4 class="task-subtitle">HRM 範疇:</h4>
+                                <ul class="list-disc list-inside text-sm space-y-2 text-gray-700">
+                                    <li>執行招募選才、新進人員報到作業。</li>
+                                    <li>計算薪資、結算勞健保與稅務。</li>
+                                    <li>管理排班、處理請假與加班申請。</li>
+                                    <li>發布公司內部公告與規章。</li>
+                                </ul>
+                                <h4 class="task-subtitle">HRD 範疇:</h4>
+                                <ul class="list-disc list-inside text-sm space-y-2 text-gray-700">
+                                    <li>執行年度教育訓練計畫。</li>
+                                    <li>引導主管與員工完成績效評估流程。</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 策略生成 -->
+                        <div class="task-card p-6">
+                            <div class="flex items-center mb-3">
+                                <i data-lucide="bar-chart-3" class="w-10 h-10 text-purple-500"></i>
+                                <h3 class="text-2xl font-bold ml-4">策略生成</h3>
+                            </div>
+                            <div class="card-content">
+                                <p class="font-semibold text-purple-600 mb-3">Strategy Generation</p>
+                                <p class="text-gray-600 mb-4">將數據轉化為商業洞察，輔助企業制定人才與組織發展的長遠計畫。</p>
+                                <h4 class="task-subtitle">HRM 範疇:</h4>
+                                <ul class="list-disc list-inside text-sm space-y-2 text-gray-700">
+                                    <li>預測企業人力需求，規劃組織配置。</li>
+                                    <li>制定具市場競爭力的薪酬福利政策。</li>
+                                    <li>規劃員工關係與企業文化活動。</li>
+                                </ul>
+                                <h4 class="task-subtitle">HRD 範疇:</h4>
+                                <ul class="list-disc list-inside text-sm space-y-2 text-gray-700">
+                                    <li>建立企業職能模型，分析技能缺口。</li>
+                                    <li>規劃人才發展與接班人計畫。</li>
+                                    <li>設計組織發展與變革管理方案。</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 處理異常 -->
+                        <div class="task-card p-6">
+                            <div class="flex items-center mb-3">
+                                <i data-lucide="shield-alert" class="w-10 h-10 text-orange-500"></i>
+                                <h3 class="text-2xl font-bold ml-4">處理異常</h3>
+                            </div>
+                            <div class="card-content">
+                                <p class="font-semibold text-orange-600 mb-3">Exception Handling</p>
+                                <p class="text-gray-600 mb-4">主動預警與偵測潛在風險，確保法規遵循，將被動的「救火」轉為前瞻的「防火」。</p>
+                                <h4 class="task-subtitle">HRM 範疇:</h4>
+                                <ul class="list-disc list-inside text-sm space-y-2 text-gray-700">
+                                    <li>偵測排班、加班是否違反勞動法規。</li>
+                                    <li>標示出缺勤異常（如未打卡、遲到）。</li>
+                                    <li>處理勞資糾紛與申訴案件。</li>
+                                </ul>
+                                <h4 class="task-subtitle">HRD 範疇:</h4>
+                                <ul class="list-disc list-inside text-sm space-y-2 text-gray-700">
+                                    <li>警示績效表現落後的員工。</li>
+                                    <li>提醒學習進度停滯或參與度低的學員。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Future Trends Section -->
+                <section class="mt-20 text-center">
+                    <button id="show-trends-btn" class="future-trends-btn text-lg">
+                        <i data-lucide="sparkles" class="inline-block w-5 h-5 mr-2 -mt-1"></i>
+                        探索 HR 的未來趨勢
+                    </button>
+                </section>
+                
+                <div id="trends-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center p-4 z-50">
+                    <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-8 relative modal-content-container">
+                        <button id="close-trends-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition-colors">
+                            <i data-lucide="x" class="w-8 h-8"></i>
+                        </button>
+                        <h2 class="text-3xl font-bold text-center mb-8 text-gray-900">HR 未來趨勢：智慧、數據與人性化的融合</h2>
+                        <div class="space-y-6 text-left">
+                            <div><h3 class="font-bold text-xl text-blue-700">1. 數位轉型與雲端系統普及</h3><p class="text-gray-600 mt-2">告別紙本，擁抱雲端。從多元打卡到薪資自動計算，E化系統正將 HR 從繁瑣的行政工作中解放，提升效率與精準度。</p></div>
+                            <div><h3 class="font-bold text-xl text-green-700">2. AI 的深度應用</h3><p class="text-gray-600 mt-2">AI 不再是概念，而是實用的工具。從簡化招募、優化新員工入職，到提供個人化發展建議與預測離職風險，AI 正成為 HR 的智慧助手。</p></div>
+                            <div><h3 class="font-bold text-xl text-purple-700">3. 數據驅動的精準決策</h3><p class="text-gray-600 mt-2">數據分析是 HR 策略的基石。企業越來越重視透過數據來提升員工績效、制定具競爭力的薪酬福利，以及進行精準的人才盤點與規劃。</p></div>
+                            <div><h3 class="font-bold text-xl text-orange-700">4. HRD 的策略性強化</h3><p class="text-gray-600 mt-2">人力資源發展 (HRD) 更加聚焦於建立完整的人才生態系，包括客製化教育訓練、職能管理與接班人計畫，以提升組織的長期競爭力。</p></div>
+                            <div><h3 class="font-bold text-xl text-yellow-600">5. 重視員工體驗與彈性工作</h3><p class="text-gray-600 mt-2">因應遠距與混合辦公模式，企業更注重員工關係與全面福利（如心理健康資源），並利用數位工具應對新型態工作的挑戰。</p></div>
+                            <div><h3 class="font-bold text-xl text-gray-700">6. HR 角色的演進：從行政幕僚到策略夥伴</h3><p class="text-gray-600 mt-2">最終，HR 的角色正從處理日常事務，轉變為參與企業核心決策的策略夥伴，專注於「招募、留住並培養人才」，以實現企業的業務目標。</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View 2: Framework Introduction -->
+            <div id="framework-view" class="view-content hidden">
+                <section class="mb-16">
+                    <h2 class="text-3xl font-bold section-title mb-6">1. Co-Agent 框架：AI 的四種專家角色</h2>
+                    <p class="text-lg text-gray-700 mb-8">與其將 AI 視為單一的全能工具，不如將其看作一個由四位各司其職的專家組成的協作團隊。這讓 AI 的行為更可預測、更值得信賴。</p>
+                    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="agent-card p-6">
+                            <div class="flex items-center mb-3"><i data-lucide="bot" class="w-10 h-10 text-blue-500"></i><h3 class="text-2xl font-bold ml-3">助理</h3></div>
+                            <p class="font-semibold text-blue-600 mb-3">效率執行的專家</p>
+                            <p class="text-gray-600 mb-4">負責處理明確、重複性的行政任務，將使用者從繁瑣的流程中解放。</p>
+                            <ul class="list-disc list-inside text-sm space-y-1 text-gray-700"><li>查詢資料</li><li>執行流程</li><li>發送通知</li></ul>
+                        </div>
+                        <div class="agent-card p-6">
+                            <div class="flex items-center mb-3"><i data-lucide="pie-chart" class="w-10 h-10 text-purple-500"></i><h3 class="text-2xl font-bold ml-3">分析師</h3></div>
+                            <p class="font-semibold text-purple-600 mb-3">數據洞察的專家</p>
+                            <p class="text-gray-600 mb-4">擅長解讀複雜數據，從中發掘趨勢與模式，輔助使用者做出更明智的決策。</p>
+                            <ul class="list-disc list-inside text-sm space-y-1 text-gray-700"><li>生成報告</li><li>預測未來</li><li>發掘關聯</li></ul>
+                        </div>
+                        <div class="agent-card p-6">
+                            <div class="flex items-center mb-3"><i data-lucide="user-check" class="w-10 h-10 text-green-500"></i><h3 class="text-2xl font-bold ml-3">教練</h3></div>
+                            <p class="font-semibold text-green-600 mb-3">人才發展的專家</p>
+                            <p class="text-gray-600 mb-4">專注於員工的成長與發展，提供個人化的建議、引導與支持。</p>
+                            <ul class="list-disc list-inside text-sm space-y-1 text-gray-700"><li>草擬評語</li><li>推薦課程</li><li>規劃職涯</li></ul>
+                        </div>
+                        <div class="agent-card p-6">
+                            <div class="flex items-center mb-3"><i data-lucide="shield-check" class="w-10 h-10 text-orange-500"></i><h3 class="text-2xl font-bold ml-3">守護者</h3></div>
+                            <p class="font-semibold text-orange-600 mb-3">合規風控的專家</p>
+                            <p class="text-gray-600 mb-4">確保所有操作符合法規與公司政策，主動預警潛在風險，保護組織安全。</p>
+                            <ul class="list-disc list-inside text-sm space-y-1 text-gray-700"><li>法規示警</li><li>風險偵測</li><li>權限控管</li></ul>
+                        </div>
+                    </div>
+                </section>
+                
+                <section class="mb-16">
+                    <h2 class="text-3xl font-bold section-title mb-6">2. 互動模式：AI 如何與你協作</h2>
+                    <p class="text-lg text-gray-700 mb-8">除了具體的 UI 狀態，Co-Agents 的行為也可以從四種核心的互動模式來理解。這些模式定義了 AI 在不同時機點『如何』提供協助，並與「HR Co-Agents應用」中的分類相對應。</p>
+                    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="interaction-card p-6">
+                            <div class="flex items-center mb-3"><i data-lucide="file-text" class="w-10 h-10 text-blue-500"></i><h3 class="text-2xl font-bold ml-3">生成結果</h3></div>
+                            <p class="text-gray-600">當您提出明確查詢後，AI 直接呈現資訊或結果。對應 Agentic UI 的 <b>Presenting</b> 狀態。</p>
+                        </div>
+                        <div class="interaction-card p-6">
+                            <div class="flex items-center mb-3"><i data-lucide="mouse-pointer-click" class="w-10 h-10 text-yellow-500"></i><h3 class="text-2xl font-bold ml-3">生成介面</h3></div>
+                            <p class="text-gray-600">AI 需要您的引導時，會主動生成互動介面來徵求輸入。對應 Agentic UI 的 <b>Eliciting</b> 狀態。</p>
+                        </div>
+                        <div class="interaction-card p-6">
+                            <div class="flex items-center mb-3"><i data-lucide="users" class="w-10 h-10 text-green-500"></i><h3 class="text-2xl font-bold ml-3">人機協作</h3></div>
+                            <p class="text-gray-600">在關鍵決策點，AI 提出建議，但將決定權交還給您。對應 Agentic UI 的 <b>Proposing</b> 狀態。</p>
+                        </div>
+                        <div class="interaction-card p-6">
+                            <div class="flex items-center mb-3"><i data-lucide="bell-ring" class="w-10 h-10 text-red-500"></i><h3 class="text-2xl font-bold ml-3">主動提醒</h3></div>
+                            <p class="text-gray-600">AI 基於事件或數據模式，主動發出提醒或預警，從旁協助您。</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-16">
+                    <h2 class="text-3xl font-bold section-title mb-6">3. Agentic UI：AI 的互動語言</h2>
+                    <p class="text-lg text-gray-700 mb-8">Co-Agents 透過一套動態生成的 UI 與使用者溝通。這套「Agentic UI」有四種核心的互動狀態，讓使用者隨時清楚 AI 正在做什麼、需要什麼。</p>
+                    <div class="grid lg:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">狀態 1: Thinking (思考中)</h3>
+                            <p class="text-gray-600 mb-4">當 AI 正在處理請求、分析數據或執行背景任務時，明確告知使用者「我正在處理」。</p>
+                            <div class="state-box"><div class="flex items-center text-gray-500 animate-pulse"><i data-lucide="loader-circle" class="w-5 h-5 mr-2 animate-spin"></i><span>正在分析您的團隊加班數據...</span></div></div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">狀態 2: Eliciting (引導輸入)</h3>
+                            <p class="text-gray-600 mb-4">當 AI 需要更多資訊才能繼續時，它會動態生成選項或輸入框來引導使用者。</p>
+                            <div class="state-box"><p class="mb-3">好的，您想申請休假。請問是哪一種假別？</p><div class="flex space-x-2"><button class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">特休</button><button class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">病假</button><button class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">事假</button></div></div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">狀態 3: Proposing (提出建議)</h3>
+                            <p class="text-gray-600 mb-4">當 AI 根據分析提出一個可執行的策略或行動方案時，會提供選項讓使用者決策。</p>
+                            <div class="state-box"><p class="mb-3">分析顯示，增聘一位初階人員可降低 20% 的加班費。您想？</p><div class="flex space-x-2"><button class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">查看詳細數據</button><button class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">暫不考慮</button></div></div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">狀態 4: Presenting (呈現結果)</h3>
+                            <p class="text-gray-600 mb-4">當 AI 完成任務後，它會以最合適的格式（圖表、列表、文字）呈現最終結果。</p>
+                            <div class="state-box"><h4 class="font-bold mb-2">Q2 加班時數分佈圖</h4><div class="w-full bg-gray-200 rounded-full h-4"><div class="bg-red-500 h-4 rounded-full" style="width: 45%"></div></div><p class="text-sm mt-1">工程部佔比 45%</p></div>
+                        </div>
+                    </div>
+                </section>
+                <section>
+                    <h2 class="text-3xl font-bold section-title mb-6">4. 完整情境演繹：Co-Agents 如何協同工作</h2>
+                    <div class="space-y-12">
+                        <div>
+                            <h3 class="text-2xl font-semibold mb-4 text-gray-800">情境一：當一位主管想解決團隊加班問題</h3>
+                            <div class="space-y-10">
+                                <div class="scenario-step"><p class="font-bold text-lg">使用者 (主管)：分析一下我團隊上季的加班狀況。</p></div>
+                                <div class="scenario-step analyst"><div class="agent-tag tag-analyst mb-2"><i data-lucide="pie-chart" class="w-4 h-4 mr-2"></i>分析師 接手</div><p class="font-bold text-lg mb-2">好的，正在為您分析...</p><div class="state-box"><div class="flex items-center text-gray-500 animate-pulse"><i data-lucide="loader-circle" class="w-5 h-5 mr-2 animate-spin"></i><span>正在整合出勤與專案數據... (Thinking)</span></div></div></div>
+                                <div class="scenario-step analyst"><div class="agent-tag tag-analyst mb-2"><i data-lucide="pie-chart" class="w-4 h-4 mr-2"></i>分析師 呈現報告</div><p class="font-bold text-lg mb-2">報告完成。您的團隊上季加班時數環比增長 30%，主要集中在新產品專案上。</p><div class="state-box"><h4 class="font-bold mb-2">加班時數趨勢圖 (Presenting)</h4><div class="w-full h-20 bg-gray-100 flex items-end space-x-2 p-2 rounded"><div class="w-1/3 bg-blue-300" style="height: 40%;"></div><div class="w-1/3 bg-blue-400" style="height: 60%;"></div><div class="w-1/3 bg-blue-500" style="height: 80%;"></div></div></div></div>
+                                <div class="scenario-step coach"><div class="agent-tag tag-coach mb-2"><i data-lucide="user-check" class="w-4 h-4 mr-2"></i>教練 主動介入</div><p class="font-bold text-lg mb-2">觀察到您的團隊有過勞風險。長期高強度加班可能影響士氣與產出。建議您安排一次團隊溝通，或考慮調整專案排程。</p><div class="state-box"><p class="mb-3">您想採取什麼行動？ (Proposing)</p><div class="flex flex-wrap gap-2"><button class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">幫我草擬一封關懷郵件</button><button class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">分析調整排程的影響</button></div></div></div>
+                                <div class="scenario-step assistant"><div class="agent-tag tag-assistant mb-2"><i data-lucide="bot" class="w-4 h-4 mr-2"></i>助理 執行任務</div><p class="font-bold text-lg mb-2">好的，已為您草擬郵件。</p><div class="state-box"><h4 class="font-bold mb-2">郵件草稿 (Presenting)</h4><p class="text-gray-700 p-4 bg-gray-50 rounded">主旨：關於近期專案的辛勞與支持<br>大家好，注意到大家最近為新專案付出了極大的努力...</p><button class="mt-3 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">發送</button></div></div>
+                            </div>
+                        </div>
+                        <hr class="my-12 border-gray-300">
+                        <div>
+                            <h3 class="text-2xl font-semibold mb-4 text-gray-800">情境二：當一位 HR 收到招募需求</h3>
+                            <div class="space-y-10">
+                                <div class="scenario-step"><p class="font-bold text-lg">使用者 (HR)：我需要為行銷部招募一位資深社群經理。</p></div>
+                                <div class="scenario-step assistant"><div class="agent-tag tag-assistant mb-2"><i data-lucide="bot" class="w-4 h-4 mr-2"></i>助理 接手</div><p class="font-bold text-lg mb-2">好的，馬上為您處理。</p><div class="state-box"><div class="flex items-center text-gray-500 animate-pulse"><i data-lucide="loader-circle" class="w-5 h-5 mr-2 animate-spin"></i><span>正在從職務資料庫生成職位描述草稿... (Thinking)</span></div></div></div>
+                                <div class="scenario-step assistant"><div class="agent-tag tag-assistant mb-2"><i data-lucide="bot" class="w-4 h-4 mr-2"></i>助理 提出建議</div><p class="font-bold text-lg mb-2">已根據標準範本草擬職缺描述，您需要加入其他特定要求嗎？</p><div class="state-box"><p class="mb-3">例如，是否需要候選人熟悉特定分析工具？ (Eliciting)</p><div class="flex space-x-2"><input type="text" placeholder="請輸入技能要求，如：GA4數據分析" class="flex-grow p-2 border rounded-md"></div></div></div>
+                                <div class="scenario-step"><p class="font-bold text-lg">使用者 (HR)：是的，請加上「熟悉 GA4 數據分析」。</p></div>
+                                <div class="scenario-step analyst"><div class="agent-tag tag-analyst mb-2"><i data-lucide="pie-chart" class="w-4 h-4 mr-2"></i>分析師 介入分析</div><p class="font-bold text-lg mb-2">已更新職缺。在發布前，分析顯示具備此技能的人才庫中，有 3 位過往的優秀候選人或許符合資格。</p><div class="state-box"><p class="mb-3">您想先聯繫他們，還是直接發布新職缺？ (Proposing)</p><div class="flex flex-wrap gap-2"><button class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600">查看候選人名單</button><button class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">直接發布職缺</button></div></div></div>
+                                <div class="scenario-step"><p class="font-bold text-lg">使用者 (HR)：先直接發布職缺，並開始篩選外部履歷。</p></div>
+                                <div class="scenario-step guardian"><div class="agent-tag tag-guardian mb-2"><i data-lucide="shield-check" class="w-4 h-4 mr-2"></i>守護者 確認合規</div><p class="font-bold text-lg mb-2">職缺發布完成。AI 履歷篩選器已啟動，所有篩選標準均符合公平就業原則。</p><div class="state-box"><p class="text-gray-700">已自動排除年齡、性別等敏感資訊，確保篩選過程的公正性。(Presenting)</p></div></div>
+                                <div class="scenario-step analyst"><div class="agent-tag tag-analyst mb-2"><i data-lucide="pie-chart" class="w-4 h-4 mr-2"></i>分析師 呈現結果</div><p class="font-bold text-lg mb-2">經過初步篩選，從 58 份履歷中為您推薦 5 位最符合資格的候選人。</p><div class="state-box"><h4 class="font-bold mb-2">候選人匹配度報告 (Presenting)</h4><ul class="space-y-2 text-sm"><li>王小美 (匹配度 95%)</li><li>陳大文 (匹配度 92%)</li><li>...</li></ul><button class="mt-3 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">安排面試</button></div></div>
+                                <div class="scenario-step coach"><div class="agent-tag tag-coach mb-2"><i data-lucide="user-check" class="w-4 h-4 mr-2"></i>教練 提供支援</div><p class="font-bold text-lg mb-2">在您安排面試的同時，我已根據此職位的核心職能，為您準備了結構化面試題庫。</p><div class="state-box"><p class="mb-3">需要為您生成針對「社群策略」與「數據分析」能力的面試問題嗎？ (Proposing)</p><div class="flex flex-wrap gap-2"><button class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">生成面試題庫</button><button class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">暫時不用</button></div></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            
+            <!-- View 3: Interactive Prototype -->
+            <div id="prototype-view" class="view-content hidden">
+                 <nav id="module-nav" class="flex border-b border-gray-200 mb-8 overflow-x-auto sticky top-0 bg-white/80 backdrop-blur-sm z-20">
+                    <button data-module="attendance" class="module-tab active py-3 px-5 text-gray-500 border-b-2 border-transparent transition-colors duration-300 whitespace-nowrap">出勤管理</button>
+                    <button data-module="performance" class="module-tab py-3 px-5 text-gray-500 border-b-2 border-transparent transition-colors duration-300 whitespace-nowrap">績效管理</button>
+                    <button data-module="development" class="module-tab py-3 px-5 text-gray-500 border-b-2 border-transparent transition-colors duration-300 whitespace-nowrap">人才發展</button>
+                    <button data-module="core_hr" class="module-tab py-3 px-5 text-gray-500 border-b-2 border-transparent transition-colors duration-300 whitespace-nowrap">人事核心</button>
+                    <button data-module="payroll" class="module-tab py-3 px-5 text-gray-500 border-b-2 border-transparent transition-colors duration-300 whitespace-nowrap">薪資管理</button>
+                </nav>
+                <main id="module-content-area">
+                    <div id="role-selector" class="flex justify-center items-center space-x-2 md:space-x-4 mb-8 bg-white p-3 rounded-full shadow-sm max-w-md mx-auto sticky top-[60px] z-10">
+                        <button data-role="All" class="role-btn active px-4 py-2 rounded-full transition-all duration-300 text-sm font-medium">全部</button>
+                        <button data-role="HR" class="role-btn px-4 py-2 rounded-full transition-all duration-300 text-sm font-medium">HR</button>
+                        <button data-role="主管" class="role-btn px-4 py-2 rounded-full transition-all duration-300 text-sm font-medium">主管</button>
+                        <button data-role="員工" class="role-btn px-4 py-2 rounded-full transition-all duration-300 text-sm font-medium">員工</button>
+                    </div>
+                    <div class="grid-container">
+                        <div class="y-axis">
+                            <div class="axis-label">生成結果</div><div class="axis-label">生成介面(互動)</div><div class="axis-label">Man in loop(決策)</div><div class="axis-label">主動提醒</div>
+                        </div>
+                        <div>
+                            <div class="main-grid mb-2">
+                                <div class="axis-label">檢索資料</div><div class="axis-label">執行任務</div><div class="axis-label">策略生成</div><div class="axis-label">處理異常</div>
+                            </div>
+                            <div id="matrix-grid-container" class="main-grid">
+                                <!-- Cells will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Prototype -->
+    <div id="interactive-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md transform transition-all duration-300 scale-95 opacity-0" id="modal-content">
+            <div class="p-6">
+                <div class="flex justify-between items-start"><h3 class="text-xl font-bold text-gray-800">互動範例：智慧引導</h3><button id="close-modal-btn" class="text-gray-400 hover:text-gray-600">&times;</button></div>
+                <p id="modal-description" class="text-sm text-gray-600 mt-2"></p>
+                <div id="modal-interaction" class="mt-4 space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Data for All Modules ---
+        const allModuleData = {
+            attendance: [
+                { row: 1, col: 1, role: '員工', title: '查詢個人出勤', userInput: '我上個月加班幾小時？', aiOutput: '您上個月總加班時數為 15.5 小時。', agenticState: 'Presenting', coagent: 'Assistant' },
+                { row: 1, col: 1, role: '主管', title: '調閱團隊出勤率', userInput: '顯示行銷部 Q2 的出勤率與加班分佈。', aiOutput: '生成圖表：部門出勤率 98.5%，並提供個人加班時數分佈圖。', agenticState: 'Presenting', coagent: 'Analyst' },
+                { row: 1, col: 1, role: 'HR', title: '篩選適用變形工時部門', userInput: '找出全公司適用變形工時的部門。', aiOutput: '生成列表：生產部、客服部等 5 個部門符合變形工時制度。', agenticState: 'Presenting', coagent: 'Guardian' },
+                { row: 1, col: 2, role: '員工', title: '申請補休', userInput: '幫我申請下週三補休。', aiOutput: '已為您送出補休申請，目前剩餘補休 8 小時。', agenticState: 'Presenting', coagent: 'Assistant' },
+                { row: 1, col: 2, role: '主管', title: '快速複製班表', userInput: '將 A 員工的班表複製給 B 員工。', aiOutput: '已將 A 的班表草案套用至 B，請確認後發布。', agenticState: 'Presenting', coagent: 'Assistant' },
+                { row: 1, col: 2, role: 'HR', title: '執行年度特休結算', userInput: '執行全公司年度特休天數結算。', aiOutput: '已完成結算，共 50 人特休未休畢，報表已生成。', agenticState: 'Presenting', coagent: 'Guardian' },
+                { row: 1, col: 3, role: '員工', title: '分析個人工作模式', userInput: '分析我過去半年的工作模式。', aiOutput: '報告顯示：您平均 9:05 上班，18:30 下班，週三加班頻率最高。', agenticState: 'Presenting', coagent: 'Analyst' },
+                { row: 1, col: 3, role: '主管', title: '預測團隊加班趨勢', userInput: '分析我團隊的加班趨勢並預測下季。', aiOutput: '報告顯示加班時數逐月升 10%，預測下季將超標 20%。', agenticState: 'Presenting', coagent: 'Analyst' },
+                { row: 1, col: 3, role: 'HR', title: '分析離職與出勤關聯', userInput: '分析全公司離職率與出勤異常的關聯。', aiOutput: '報告顯示：離職前三個月，員工平均遲到次數增加 35%。', agenticState: 'Presenting', coagent: 'Analyst' },
+                { row: 1, col: 4, role: '員工', title: '查詢個人異常紀錄', userInput: '我上週五的打卡紀錄好像有問題。', aiOutput: '查詢到您上週五 18:05 打卡地點異常，已標示為待處理。', agenticState: 'Presenting', coagent: 'Assistant' },
+                { row: 1, col: 4, role: '主管', title: '列出團隊待處理異常', userInput: '列出我團隊本月所有未處理的打卡異常。', aiOutput: '生成清單：共 3 筆異常待處理，分別是王小明的忘打卡...', agenticState: 'Presenting', coagent: 'Guardian' },
+                { row: 1, col: 4, role: 'HR', title: '生成勞檢風險報告', userInput: '生成全公司勞檢風險報告。', aiOutput: '報告顯示「連續出勤超 6 天」為高風險項，涉及 15 人。', agenticState: 'Presenting', coagent: 'Guardian' },
+                { row: 2, col: 2, role: '員工', title: '動態生成請假選項', userInput: '我明天想請假。', aiOutput: '生成單選選項 `(o) 特休` `( ) 病假` `( ) 事假`。', agenticState: 'Eliciting', coagent: 'Assistant', interactive: true },
+                { row: 2, col: 1, role: '員工', title: '生成常用查詢按鈕', userInput: '我想查班表。', aiOutput: '生成按鈕 `[本週班表]` `[下週班表]` `[查詢特定日期]`。', agenticState: 'Eliciting', coagent: 'Assistant' },
+                { row: 2, col: 1, role: '主管', title: '生成團隊管理捷徑', userInput: '我想看團隊的出勤狀況。', aiOutput: '生成按鈕 `[即時儀表板]` `[團隊加班統計]` `[請假狀況]`。', agenticState: 'Eliciting', coagent: 'Assistant' },
+                { row: 2, col: 1, role: 'HR', title: '生成法規查詢捷徑', userInput: '我要查勞基法規定。', aiOutput: '生成按鈕 `[加班時數上限]` `[例假日規定]` `[變形工時]`。', agenticState: 'Eliciting', coagent: 'Assistant' },
+                { row: 2, col: 2, role: '主管', title: '生成後續操作選項', userInput: '批准王小明的假單。', aiOutput: '批准後，生成選項 `[通知王小明]` `[更新團隊行事曆]`。', agenticState: 'Eliciting', coagent: 'Assistant' },
+                { row: 2, col: 2, role: 'HR', title: '生成新班別設定表單', userInput: '設定一個新的班別。', aiOutput: '生成表單介面，引導輸入班別名稱、時間等欄位。', agenticState: 'Eliciting', coagent: 'Assistant' },
+                { row: 2, col: 3, role: '員工', title: '生成特休規劃介面', userInput: '我想規劃我的特休。', aiOutput: '生成行事曆介面，標示假日與建議的長假組合供點選。', agenticState: 'Proposing', coagent: 'Coach' },
+                { row: 2, col: 3, role: '主管', title: '生成策略探索選項', userInput: '如何降低團隊加班費？', aiOutput: '生成選項 `[分析加班原因]` `[模擬增聘效益]` `[探索彈性工時]`。', agenticState: 'Proposing', coagent: 'Analyst' },
+                { row: 2, col: 3, role: 'HR', title: '生成政策改善選項', userInput: '我想改善遠距工作政策。', aiOutput: '生成選項 `[參考同業政策]` `[發起滿意度調查]` `[分析成效]`。', agenticState: 'Proposing', coagent: 'Coach' },
+                { row: 2, col: 4, role: '員工', title: '生成打卡失敗回報選項', userInput: '系統偵測到打卡失敗。', aiOutput: '偵測到打卡失敗，生成按鈕 `[重新打卡]` `[回報網路問題]`。', agenticState: 'Eliciting', coagent: 'Assistant' },
+                { row: 2, col: 4, role: '主管', title: '生成加班超時處理選項', userInput: '收到員工加班超時警示。', aiOutput: '員工加班超時，生成按鈕 `[立即聯絡]` `[指派他人接手]`。', agenticState: 'Proposing', coagent: 'Guardian' },
+                { row: 2, col: 4, role: 'HR', title: '生成勞檢應對清單', userInput: '收到勞檢通知。', aiOutput: '收到通知，生成待辦清單 `[準備出勤紀錄]` `[檢查薪資證明]`。', agenticState: 'Proposing', coagent: 'Guardian' },
+                { row: 3, col: 1, role: '員工', title: '個資二次驗證', userInput: '我想查詢我的薪資明細。', aiOutput: '需通過二次驗證，由您本人確認後才能顯示。', agenticState: 'Presenting', coagent: 'Guardian' },
+                { row: 3, col: 1, role: '主管', title: '敏感資料調閱確認', userInput: '我想看 A 的績效與出勤關聯。', aiOutput: '此涉及敏感個資，需由您確認已知悉隱私政策後才生成。', agenticState: 'Presenting', coagent: 'Guardian' },
+                { row: 3, col: 1, role: 'HR', title: '重大個資調閱審批', userInput: '調閱某員工通訊紀錄以調查。', aiOutput: '需由法務與主管共同批准後，系統才提供資料。', agenticState: 'Presenting', coagent: 'Guardian' },
+                { row: 3, col: 2, role: '員工', title: '換班需對方同意', userInput: '我要申請跟 B 員工換班。', aiOutput: '已發送請求，需由 B 同意後，再提交給主管審核。', agenticState: 'Presenting', coagent: 'Assistant' },
+                { row: 3, col: 2, role: '主管', title: '班表最終審核發布', userInput: 'AI 建議的下週排班表。', aiOutput: '呈現班表草案，由您手動審核、微調後，點擊發布才生效。', agenticState: 'Proposing', coagent: 'Assistant' },
+                { row: 3, col: 2, role: 'HR', title: '新政策人工審閱', userInput: '系統建議更新出勤政策。', aiOutput: '提供政策修改草案，需由 HR 負責人審閱並公告後才套用。', agenticState: 'Proposing', coagent: 'Coach' },
+                { row: 3, col: 3, role: '員工', title: '個人化建議採納', userInput: 'AI 建議我調整工作節奏。', aiOutput: '提供建議方案，但最終由您自己決定是否採納。', agenticState: 'Proposing', coagent: 'Coach' },
+                { row: 3, col: 3, role: '主管', title: '增聘建議決策', userInput: 'AI 建議增聘人力。', aiOutput: '提供數據佐證，但由您進行商業判斷後，決定是否提交需求。', agenticState: 'Proposing', coagent: 'Analyst' },
+                { row: 3, col: 3, role: 'HR', title: '洞察後的人工介入', userInput: 'AI 分析顯示某部門排班不公。', aiOutput: '提供數據洞察，但需由 HRBP 介入訪談後，再制定改善策略。', agenticState: 'Presenting', coagent: 'Analyst' },
+                { row: 3, col: 4, role: '員工', title: '異常紀錄申訴', userInput: '系統偵測到我的打卡地點異常。', aiOutput: '系統標示異常，但提供申訴選項，由您說明原因後提交審核。', agenticState: 'Presenting', coagent: 'Assistant' },
+                { row: 3, col: 4, role: '主管', title: '異常處理決策', userInput: 'AI 標示出某員工頻繁遲到。', aiOutput: '提供處理建議，但由您決定是否執行以及如何執行。', agenticState: 'Proposing', coagent: 'Coach' },
+                { row: 3, col: 4, role: 'HR', title: '高風險加班人工審批', userInput: '系統警示某部門加班可能違法。', aiOutput: 'AI 自動鎖定加班申請，需由 HR 人員手動審核超時加班的必要性。', agenticState: 'Presenting', coagent: 'Guardian' },
+                { row: 4, col: 1, role: '員工', title: '個人假期提醒', userInput: '生日當月。', aiOutput: '提醒：您本月有生日假 1 天尚未使用，記得安排休息喔！', agenticState: 'Presenting', coagent: 'Coach' },
+                { row: 4, col: 1, role: '主管', title: '團隊成員狀態提醒', userInput: '團隊成員試用期將滿。', aiOutput: '提醒：員工 C 的試用期將於下週五到期，請完成評核。', agenticState: 'Presenting', coagent: 'Assistant' },
+                { row: 4, col: 1, role: 'HR', title: '全公司資料完整性提醒', userInput: '系統掃描到證照過期。', aiOutput: '提醒：資料庫中有 5 位員工的證照已過期，請確認。', agenticState: 'Presenting', coagent: 'Guardian' },
+                { row: 4, col: 2, role: '員工', title: '日常任務提醒', userInput: '下班時間到。', aiOutput: '提醒：已到下班時間，如需加班請記得申請。', agenticState: 'Proposing', coagent: 'Coach' },
+                { row: 4, col: 2, role: '主管', title: '簽核任務提醒', userInput: '有新假單提交。', aiOutput: '提醒：您有 3 筆假單、2 筆加班申請待簽核。', agenticState: 'Presenting', coagent: 'Assistant' },
+                { row: 4, col: 2, role: 'HR', title: '關鍵流程提醒', userInput: '薪資發放日前。', aiOutput: '提醒：今天是薪資結算日，請完成所有出勤數據的確認。', agenticState: 'Presenting', coagent: 'Guardian' },
+                { row: 4, col: 3, role: '員工', title: '個人健康關懷', userInput: '連續加班。', aiOutput: '提醒：您已連續加班 3 天，請注意休息，平衡工作與生活。', agenticState: 'Presenting', coagent: 'Coach' },
+                { row: 4, col: 3, role: '主管', title: '團隊風險預警', userInput: '偵測到團隊士氣低落風險。', aiOutput: '洞察：根據請假模式與加班時數，偵測到團隊可能士氣低落。', agenticState: 'Presenting', coagent: 'Analyst' },
+                { row: 4, col: 3, role: 'HR', title: '法規變更預警', userInput: '法規即將變更。', aiOutput: '提醒：勞基法新修正案將於三個月後生效，建議規劃內部政策調整。', agenticState: 'Presenting', coagent: 'Guardian' },
+                { row: 4, col: 4, role: '員工', title: '個人異常提醒', userInput: '忘記打卡。', aiOutput: '提醒：偵測到您登入系統但無打卡紀錄，需要補登嗎？', agenticState: 'Proposing', coagent: 'Assistant' },
+                { row: 4, col: 4, role: '主管', title: '員工關懷提醒', userInput: '員工連續請假。', aiOutput: '提醒：員工 D 已連續請病假 3 天，可能需要您主動關心。', agenticState: 'Presenting', coagent: 'Coach' },
+                { row: 4, col: 4, role: 'HR', title: '系統性風險警示', userInput: '偵測到同 IP 多人打卡。', aiOutput: '警示：偵測到同 IP 多筆打卡，疑似有代打卡風險，請查核。', agenticState: 'Presenting', coagent: 'Guardian' },
+            ],
+            core_hr: [
+                { row: 1, col: 1, role: '員工', title: '查詢個人資料', userInput: '我的到職日是哪天？', aiOutput: '您的到職日是 2022年10月20日。', agenticState: 'Presenting', coagent: 'Assistant' },
+                { row: 1, col: 1, role: '主管', title: '查詢下屬資料', userInput: '王小明的職位和部門？', aiOutput: '王小明是行銷部的資深專員。', agenticState: 'Presenting', coagent: 'Assistant' },
+                { row: 1, col: 1, role: 'HR', title: '查詢員工異動史', userInput: '查詢王小明的所有職務異動紀錄。', aiOutput: '生成王小明的完整異動歷史列表。', agenticState: 'Presenting', coagent: 'Guardian' },
+                { row: 1, col: 2, role: '員工', title: '更新聯絡方式', userInput: '幫我更新我的電話號碼。', aiOutput: '好的，請輸入新的電話號碼。', agenticState: 'Eliciting', coagent: 'Assistant' },
+                { row: 1, col: 2, role: '主管', title: '提交轉調申請', userInput: '幫王小明申請轉調到產品部。', aiOutput: '已開啟轉調申請流程，請填寫原因及生效日。', agenticState: 'Presenting', coagent: 'Assistant' },
+                { row: 1, col: 2, role: 'HR', title: '執行新人報到', userInput: '執行新進員工李大文的報到流程。', aiOutput: '已發送報到通知、建立帳號並加入保險。', agenticState: 'Presenting', coagent: 'Assistant' },
+                { row: 1, col: 3, role: '主管', title: '分析團隊結構', userInput: '分析我團隊的職級分佈。', aiOutput: '生成圖表：您的團隊目前資深佔 50%，一般佔 30%，初階佔 20%。', agenticState: 'Presenting', coagent: 'Analyst' },
+                { row: 1, col: 3, role: 'HR', title: '預測組織人力流動', userInput: '預測下半年的人力流動趨勢。', aiOutput: '根據歷史數據，預測下半年離職率約為 8%，主要集中在業務部門。', agenticState: 'Presenting', coagent: 'Analyst' },
+                { row: 4, col: 4, role: 'HR', title: '合約到期警示', userInput: '系統定期掃描', aiOutput: '警示：有 3 位員工的合約將於下個月到期，請處理續約或離退。', agenticState: 'Presenting', coagent: 'Guardian' },
+            ],
+            payroll: [
+                { row: 1, col: 1, role: '員工', title: '查詢薪資單', userInput: '我要看上個月的薪資單。', aiOutput: '已為您顯示上個月的薪資明細。', agenticState: 'Presenting', coagent: 'Assistant' },
+                { row: 1, col: 1, role: '主管', title: '查詢團隊薪資成本', userInput: '我團隊上季的總薪資成本是多少？', aiOutput: '您的團隊上季總薪資成本為 $1,500,000。', agenticState: 'Presenting', coagent: 'Analyst' },
+                { row: 1, col: 1, role: 'HR', title: '查詢投保級距', userInput: '查詢所有員工的勞健保投保級距。', aiOutput: '生成全公司勞健保投保級距總表。', agenticState: 'Presenting', coagent: 'Guardian' },
+                { row: 1, col: 2, role: 'HR', title: '執行薪資計算', userInput: '計算本月薪資。', aiOutput: '已自動匯入出勤資料，完成薪資計算，共 150 筆，請確認。', agenticState: 'Presenting', coagent: 'Guardian' },
+                { row: 1, col: 2, role: 'HR', title: '批次申報保險', userInput: '批次申報本月新人的勞健保。', aiOutput: '已完成 5 位新人的勞健保加保申報作業。', agenticState: 'Presenting', coagent: 'Guardian' },
+                { row: 1, col: 3, role: 'HR', title: '分析薪資結構', userInput: '分析目前薪資結構的市場競爭力。', aiOutput: '報告顯示：我司初階職位薪資高於市場 5%，但高階職位低於市場 10%。', agenticState: 'Presenting', coagent: 'Analyst' },
+                { row: 4, col: 2, role: '員工', title: '薪資單發放提醒', userInput: '每月發薪日。', aiOutput: '提醒：本月薪資單已發放，請至系統查閱。', agenticState: 'Presenting', coagent: 'Assistant' },
+                { row: 4, col: 4, role: 'HR', title: '投保級距調整提醒', userInput: '系統偵測到薪資變動。', aiOutput: '提醒：有 10 位員工因薪資異動，需調整投保級距，是否批次處理？', agenticState: 'Proposing', coagent: 'Guardian' },
+            ],
+            performance: [
+                { row: 1, col: 1, role: '員工', title: '查詢我的目標', userInput: '我這季的 OKR 是什麼？', aiOutput: '您本季的目標是「提升客戶滿意度 10%」。', agenticState: 'Presenting', coagent: 'Assistant' },
+                { row: 1, col: 1, role: '主管', title: '查詢團隊績效', userInput: '我團隊上季的績效達成率如何？', aiOutput: '您的團隊上季平均績效達成率為 95%。', agenticState: 'Presenting', coagent: 'Analyst' },
+                { row: 1, col: 2, role: '主管', title: '草擬績效評語', userInput: '幫我草擬王小明的績效評語。', aiOutput: '根據數據，草擬評語：「王小明本季表現優異，超額完成業績目標...」', agenticState: 'Proposing', coagent: 'Coach' },
+                { row: 1, col: 3, role: '主管', title: '分析績效瓶頸', userInput: '分析團隊績效未達標的原因。', aiOutput: '數據顯示：主要瓶頸在於「新產品知識不足」，建議安排相關培訓。', agenticState: 'Presenting', coagent: 'Analyst' },
+                { row: 1, col: 3, role: 'HR', title: '分析績效與薪酬關聯', userInput: '分析績效與薪酬的關聯性。', aiOutput: '報告顯示：績效前 20% 的員工，其薪資增長率高於平均 15%。', agenticState: 'Presenting', coagent: 'Analyst' },
+                { row: 2, col: 2, role: '主管', title: '引導績效評核', userInput: '開始進行團隊的績效評核。', aiOutput: '好的，已開啟評核流程，請依序為團隊成員評分。', agenticState: 'Eliciting', coagent: 'Assistant' },
+                { row: 4, col: 2, role: '員工', title: '績效回饋提醒', userInput: '評核週期結束。', aiOutput: '提醒：您的主管已完成績效評核，請預約時間進行一對一回饋。', agenticState: 'Presenting', coagent: 'Coach' },
+                { row: 4, col: 2, role: '主管', title: '評核截止提醒', userInput: '評核截止前三天。', aiOutput: '提醒：績效評核將於 3 天後截止，您尚有 2 位成員未完成。', agenticState: 'Presenting', coagent: 'Assistant' },
+            ],
+            development: [
+                { row: 1, col: 1, role: '員工', title: '查詢我的學習地圖', userInput: '我的學習地圖是什麼？', aiOutput: '根據您的職位，建議您先完成「進階簡報技巧」課程。', agenticState: 'Presenting', coagent: 'Coach' },
+                { row: 1, col: 1, role: '主管', title: '查詢團隊技能庫', userInput: '盤點我團隊的技能狀況。', aiOutput: '生成團隊技能矩陣圖，顯示「數據分析」為待加強技能。', agenticState: 'Presenting', coagent: 'Analyst' },
+                { row: 1, col: 2, role: '員工', title: '報名課程', userInput: '幫我報名「專案管理」課程。', aiOutput: '已為您報名成功，課程將於下週開始。', agenticState: 'Presenting', coagent: 'Assistant' },
+                { row: 1, col: 3, role: 'HR', title: '分析技能差距', userInput: '分析公司目前的技能差距。', aiOutput: '報告顯示：未來三年，「AI 應用」將是最大技能缺口，建議規劃相關內訓。', agenticState: 'Presenting', coagent: 'Analyst' },
+                { row: 2, col: 3, role: '主管', title: '規劃下屬發展計畫', userInput: '為王小明規劃發展計畫。', aiOutput: '根據績效與職涯目標，建議發展路徑選項 `[深化技術]` `[轉向管理]`。', agenticState: 'Proposing', coagent: 'Coach' },
+                { row: 3, col: 3, role: 'HR', title: '規劃繼任計畫', userInput: '規劃行銷總監的繼任計畫。', aiOutput: '根據人才盤點，建議候選人 A, B, C，並列出其需補強的職能。', agenticState: 'Proposing', coagent: 'Analyst' },
+                { row: 4, col: 3, role: '員工', title: '課程推薦提醒', userInput: '完成某項專案後。', aiOutput: '觀察到您最近常處理數據，推薦您參加「Python 數據分析入門」課程。', agenticState: 'Proposing', coagent: 'Coach' },
+            ]
+        };
+
+        // --- Global State for Prototype ---
+        let currentModule = 'attendance';
+        let currentRole = 'All';
+
+        // --- Functions for Prototype ---
+        function getRoleClass(role) { return `role-${role}`; }
+        function getAgenticStateClass(state) { return `state-${state}`; }
+        function getCoagentClass(coagent) { return `coagent-${coagent}`; }
+
+        function renderMatrix(module, filterRole) {
+            const matrixContainer = document.querySelector('#prototype-view #matrix-grid-container');
+            if (!matrixContainer) return;
+            matrixContainer.innerHTML = ''; // Clear only the matrix cells container
+
+            const moduleData = allModuleData[module] || [];
+
+            // Always recreate the grid cells structure inside the container
+            for (let r = 1; r <= 4; r++) {
+                for (let c = 1; c <= 4; c++) {
+                    const cell = document.createElement('div');
+                    cell.id = `cell-${r}-${c}`;
+                    cell.className = 'matrix-cell';
+                    matrixContainer.appendChild(cell);
+                }
+            }
+            
+            if (moduleData.length === 0) {
+                 matrixContainer.innerHTML = `<div class="col-span-4 text-center p-16 bg-white rounded-lg shadow"><h2 class="text-2xl font-bold text-gray-700">內容建構中</h2><p class="mt-2 text-gray-500">此模組的 AI 應用情境即將推出。</p></div>`;
+                 return;
+            }
+
+            const filteredData = filterRole === 'All' ? moduleData : moduleData.filter(item => item.role === filterRole);
+
+            if (filteredData.length === 0) {
+                 matrixContainer.innerHTML = `<div class="col-span-4 text-center p-16 bg-white rounded-lg shadow"><h2 class="text-2xl font-bold text-gray-700">無適用項目</h2><p class="mt-2 text-gray-500">在此模組中，沒有為「${filterRole}」角色設計的特定 AI 應用情境。</p></div>`;
+                 return;
+            }
+
+            filteredData.forEach(item => {
+                const cell = matrixContainer.querySelector(`#cell-${item.row}-${item.col}`);
+                if (!cell) return;
+                const card = document.createElement('div');
+                card.className = `matrix-card rounded-lg p-2 shadow-sm flex flex-col justify-between ${item.interactive ? 'cursor-pointer interactive-pulse' : ''}`;
+                card.innerHTML = `<div class="flex-grow flex flex-col">
+                                    <div class="flex items-start justify-between mb-1.5 gap-2">
+                                        <span class="role-tag ${getRoleClass(item.role)}">${item.role}</span>
+                                        <div class="flex flex-col items-end gap-1">
+                                            <span class="state-tag ${getAgenticStateClass(item.agenticState)}">${item.agenticState}</span>
+                                            <span class="coagent-tag ${getCoagentClass(item.coagent)}">${item.coagent}</span>
+                                        </div>
+                                    </div>
+                                    <h4 class="font-bold text-gray-800 text-xs mb-1.5 flex-grow">${item.title}</h4>
+                                    <div class="text-xs space-y-1 text-gray-600 pl-1">
+                                        <div class="flex items-start">
+                                            <i data-lucide="user" class="io-icon text-blue-600 mt-0.5"></i>
+                                            <div class="break-words w-full">${item.userInput}</div>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <i data-lucide="bot" class="io-icon text-green-600 mt-0.5"></i>
+                                            <div class="break-words w-full">${item.aiOutput}</div>
+                                        </div>
+                                    </div>
+                                 </div>`;
+                if (item.interactive) {
+                    card.addEventListener('click', () => openModal(item));
+                }
+                cell.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function openModal(item) {
+            const modal = document.getElementById('interactive-modal');
+            const modalContent = document.getElementById('modal-content');
+            const modalDescription = document.getElementById('modal-description');
+            const modalInteraction = document.getElementById('modal-interaction');
+            
+            modalDescription.textContent = `AI 以「${item.agenticState}」狀態與您互動，並扮演「${item.coagent}」角色。`;
+            modalInteraction.innerHTML = `<div class="flex items-start space-x-3"><i data-lucide="user-circle-2" class="w-10 h-10 text-blue-500 flex-shrink-0"></i><div class="bg-blue-50 p-3 rounded-lg"><p class="font-semibold text-blue-800">您</p><p class="text-gray-700">${item.userInput}</p></div></div><div class="flex items-start space-x-3"><i data-lucide="bot" class="w-10 h-10 text-green-500 flex-shrink-0"></i><div class="bg-green-50 p-3 rounded-lg w-full"><p class="font-semibold text-green-800">AI ${item.coagent}</p><p class="text-gray-700 mb-3">好的，請選擇您要申請的假別：</p><div id="ai-generated-options" class="space-y-2"><p class="text-sm text-gray-500 animate-pulse">正在根據您的狀況生成選項...</p></div><div id="ai-response-message" class="mt-3 text-sm text-green-700 font-medium hidden"></div></div></div>`;
+            lucide.createIcons();
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                modalContent.style.opacity = '1';
+                modalContent.style.transform = 'scale(1)';
+            }, 10);
+            
+            setTimeout(() => {
+                const aiOptionsContainer = document.getElementById('ai-generated-options');
+                if (aiOptionsContainer) {
+                    aiOptionsContainer.innerHTML = `<label class="flex items-center p-2 rounded-md hover:bg-gray-100 cursor-pointer"><input type="radio" name="leaveType" value="特休" class="mr-2"><span>特休 (剩餘 5 天)</span></label><label class="flex items-center p-2 rounded-md hover:bg-gray-100 cursor-pointer"><input type="radio" name="leaveType" value="病假" class="mr-2"><span>病假 (剩餘 12 小時)</span></label><label class="flex items-center p-2 rounded-md hover:bg-gray-100 cursor-pointer"><input type="radio" name="leaveType" value="事假" class="mr-2"><span>事假</span></label>`;
+                }
+            }, 1500);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('interactive-modal');
+            const modalContent = document.getElementById('modal-content');
+            modal.style.opacity = '0';
+            modalContent.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+
+            // Main Tab Navigation
+            const mainNav = document.getElementById('main-nav');
+            const views = document.querySelectorAll('.view-content');
+            mainNav.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    const viewName = e.target.dataset.view;
+                    mainNav.querySelector('.active').classList.remove('active');
+                    e.target.classList.add('active');
+
+                    views.forEach(view => {
+                        view.classList.add('hidden');
+                    });
+                    document.getElementById(`${viewName}-view`).classList.remove('hidden');
+                    
+                    lucide.createIcons();
+                    
+                    if (viewName === 'prototype') {
+                        renderMatrix(currentModule, currentRole);
+                    }
+                }
+            });
+
+            // Prototype: Module Navigation
+            const moduleNav = document.getElementById('module-nav');
+            const roleSelector = document.getElementById('role-selector');
+            if(moduleNav && roleSelector) {
+                moduleNav.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON') {
+                        currentModule = e.target.dataset.module;
+                        moduleNav.querySelector('.active').classList.remove('active');
+                        e.target.classList.add('active');
+                        currentRole = 'All';
+                        roleSelector.querySelector('.active').classList.remove('active');
+                        roleSelector.querySelector('[data-role="All"]').classList.add('active');
+                        renderMatrix(currentModule, currentRole);
+                    }
+                });
+
+                // Prototype: Role Selector
+                roleSelector.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON') {
+                        currentRole = e.target.dataset.role;
+                        roleSelector.querySelector('.active').classList.remove('active');
+                        e.target.classList.add('active');
+                        renderMatrix(currentModule, currentRole);
+                    }
+                });
+            }
+
+            // Prototype: Modal
+            const modal = document.getElementById('interactive-modal');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            if(modal && closeModalBtn) {
+                closeModalBtn.addEventListener('click', closeModal);
+                modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+                
+                modal.addEventListener('change', (e) => {
+                     if (e.target.name === 'leaveType') {
+                        const aiResponseMessage = document.getElementById('ai-response-message');
+                        if(aiResponseMessage) {
+                            aiResponseMessage.textContent = `好的，已為您選擇「${e.target.value}」。請確認時間後即可送出申請。`;
+                            aiResponseMessage.classList.remove('hidden');
+                        }
+                    }
+                });
+            }
+            
+            // HR Tasks Tab: Modal Logic
+            const showTrendsBtn = document.getElementById('show-trends-btn');
+            const closeTrendsBtn = document.getElementById('close-trends-btn');
+            const trendsModal = document.getElementById('trends-modal');
+
+            const openTrendsModal = () => {
+                if(!trendsModal) return;
+                trendsModal.classList.remove('hidden');
+                setTimeout(() => { trendsModal.classList.add('modal-open'); }, 10);
+            };
+
+            const closeTrendsModal = () => {
+                if(!trendsModal) return;
+                trendsModal.classList.remove('modal-open');
+                setTimeout(() => { trendsModal.classList.add('hidden'); }, 300);
+            };
+
+            if (showTrendsBtn) showTrendsBtn.addEventListener('click', openTrendsModal);
+            if (closeTrendsBtn) closeTrendsBtn.addEventListener('click', closeTrendsModal);
+            if (trendsModal) trendsModal.addEventListener('click', (event) => { if (event.target === trendsModal) closeTrendsModal(); });
+            
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && trendsModal && !trendsModal.classList.contains('hidden')) {
+                    closeTrendsModal();
+                }
+            });
+
+            // Initial render for prototype view
+            renderMatrix(currentModule, currentRole);
+        });
+    </script>
+</body>
+</html>

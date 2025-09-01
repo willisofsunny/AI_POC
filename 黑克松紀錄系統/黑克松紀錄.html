@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 驅動黑客松：我們的學習歷程與行動劇本</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            --main-color: #58a4e4;
+            --main-color-dark: #3a8dcf;
+            --main-color-light: #eaf6ff;
+            --main-color-lighter: #d4edfc;
+            --main-color-dark-text: #2c73ad;
+        }
+        .tab-active {
+            background-color: var(--main-color);
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .tab-inactive {
+            background-color: var(--main-color-light);
+            color: var(--main-color-dark-text);
+        }
+        .playbook-card {
+            background-color: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .playbook-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .inner-card {
+             background-color: #f8fafc; /* bg-slate-50 */
+             border: 1px solid #f1f5f9; /* border-slate-100 */
+             border-radius: 0.75rem;
+             padding: 1.5rem;
+             height: 100%;
+             display: flex;
+             flex-direction: column;
+        }
+        .custom-list {
+            list-style-type: disc;
+            padding-left: 1.25rem;
+        }
+        .custom-list li {
+            padding-left: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .role-content {
+            background-color: #f8fafc;
+            border-left: 3px solid var(--main-color-lighter);
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        .link {
+            color: var(--main-color-dark-text);
+            text-decoration: underline;
+            font-weight: 500;
+        }
+        .link:hover {
+            color: var(--main-color-dark);
+        }
+        .prompt-card {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            border: 1px solid #e5e7eb;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .prompt-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+            background-color: #f9fafb;
+            font-family: monospace;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .prompt-input {
+             width: 100%;
+             padding: 0.5rem 0.75rem;
+             border-radius: 0.5rem;
+             border: 1px solid #d1d5db;
+        }
+        .code-block {
+            background-color: #1f2937; /* bg-gray-800 */
+            color: #d1d5db; /* text-gray-300 */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- Hero Section -->
+    <header style="background-color: var(--main-color-dark);" class="text-white shadow-lg">
+        <div class="container mx-auto max-w-5xl px-6 py-20 text-center">
+            <h1 class="text-3xl md:text-5xl font-bold mb-4">我們的第一次 AI 驅動黑客松</h1>
+            <p class="text-lg md:text-xl opacity-90 max-w-3xl mx-auto">
+                從一個 PM 的點子，到一個 API 串接成功的原型。這是一趟關於速度、協作、意外發現與深刻學習的旅程。
+            </p>
+            <a href="#playbook-2" class="mt-8 inline-block px-8 py-3 bg-white font-bold rounded-full shadow-lg hover:bg-opacity-90 transition duration-300" style="color: var(--main-color-dark);">
+                直接取用我們的行動劇本 2.0
+            </a>
+        </div>
+    </header>
+
+    <main class="container mx-auto max-w-5xl p-6 md:p-10">
+        
+        <!-- Why Hackathon Section -->
+        <section class="mb-16" id="why-hackathon">
+            <h2 class="text-3xl font-bold text-center mb-10">我們為何舉辦黑客松？</h2>
+            <div class="space-y-8">
+                <div class="playbook-card">
+                     <h3 class="font-bold text-xl mb-4" style="color: var(--main-color);">最初的火花：從一個真實的痛點出發</h3>
+                     <ul class="custom-list text-slate-700">
+                        <li>我們的起點並非為了比賽，而是為了解決一個真實的專案困境：一個需要耗費大量人力的紙本與 Excel 資料收集流程。</li>
+                        <li>最初的想法很單純：PM 能否利用 AI 工具快速產出一個前端原型，然後讓工程師快速串接真實 API，從而繞過緩慢的開發流程？</li>
+                        <li>我們想驗證：一個由 AI 驅動、跨職能合作的「一日衝刺」，是否能比傳統的開發模式更快解決問題？</li>
+                     </ul>
+                </div>
+                 <div class="playbook-card">
+                     <h3 class="font-bold text-xl mb-4" style="color: var(--main-color-dark-text);">意想不到的收穫：我們真正得到的價值</h3>
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                        <div class="inner-card">
+                            <h4 class="font-semibold text-lg mb-2">不僅是開發，更是「API 實境體檢」</h4>
+                            <ul class="text-sm custom-list text-slate-600 flex-grow">
+                                <li>當團隊（尤其是後端工程師）實際操作一個需要使用 API 的真實場景時，才赫然發現部分既有 API 的設計，在真實情境下根本不敷使用。</li>
+                                <li>這次活動成了一場高效的「API 壓力測試」，讓我們在開發初期就修正了設計盲點，避免了日後更高的修改成本。</li>
+                            </ul>
+                        </div>
+                        <div class="inner-card">
+                            <h4 class="font-semibold text-lg mb-2">打破溝通的牆，建立共享情境</h4>
+                            <ul class="text-sm custom-list text-slate-600 flex-grow">
+                                <li>一位工程師回饋，在活動前他「不太了解整個需求脈絡」。</li>
+                                <li>這次活動強制性地讓所有人「快速對焦、釐清、達成共識」，打破了資訊孤島，讓原本模糊的需求，成為了團隊共同的目標。</li>
+                            </ul>
+                        </div>
+                        <div class="inner-card">
+                            <h4 class="font-semibold text-lg mb-2">定義我們與 AI 的關係</h4>
+                            <ul class="text-sm custom-list text-slate-600 flex-grow">
+                                <li>我們親身體驗了所謂的「介略問題」：AI 產出的原型雖然快，但難以直接用於持續性的產品開發。</li>
+                                <li>這次經驗幫助我們確立了重要的內部共識：AI MVP 是絕佳的「驗證工具」與「高保真需求文件」，而非「產品初版程式碼」。</li>
+                            </ul>
+                        </div>
+                        <div class="inner-card">
+                            <h4 class="font-semibold text-lg mb-2">點燃團隊的火花</h4>
+                            <ul class="text-sm custom-list text-slate-600 flex-grow">
+                                <li>一位工程師說：「我反而覺得一開始給的需求『剛剛好』。」</li>
+                                <li>這代表活動創造了一個讓團隊能共同激盪、收斂想法的環境，每個人都是貢獻者，而不只是執行者。</li>
+                            </ul>
+                        </div>
+                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- The Journey Section -->
+        <section class="mb-16" id="learnings">
+            <h2 class="text-3xl font-bold text-center mb-10">我們的旅程：一次 MVP 之旅的核心洞察</h2>
+            <div class="playbook-card">
+                <!-- Tabs -->
+                <div class="flex flex-wrap gap-2 mb-6 rounded-lg p-1" style="background-color: var(--main-color-light);">
+                    <button id="tab-btn-1" class="tab-btn flex-1 px-4 py-3 rounded-md transition-colors duration-300 text-sm md:text-base" onclick="switchTab(1)">協作的化學反應</button>
+                    <button id="tab-btn-2" class="tab-btn flex-1 px-4 py-3 rounded-md transition-colors duration-300 text-sm md:text-base" onclick="switchTab(2)">成果的再定義</button>
+                    <button id="tab-btn-3" class="tab-btn flex-1 px-4 py-3 rounded-md transition-colors duration-300 text-sm md:text-base" onclick="switchTab(3)">AI 的雙面刃</button>
+                    <button id="tab-btn-4" class="tab-btn flex-1 px-4 py-3 rounded-md transition-colors duration-300 text-sm md:text-base" onclick="switchTab(4)">PM & Frontend 協作</button>
+                    <button id="tab-btn-5" class="tab-btn flex-1 px-4 py-3 rounded-md transition-colors duration-300 text-sm md:text-base" onclick="switchTab(5)">Prompt Playbook</button>
+                </div>
+                <!-- Tab Contents... -->
+                <div id="tab-content-1" class="tab-content hidden">
+                    <h3 class="font-bold text-xl mb-4" style="color: var(--main-color);">完美的啟動：「剛剛好」的需求</h3>
+                     <ul class="custom-list text-slate-700">
+                        <li>一位工程師回饋：「我反而覺得一開始給的需求『剛剛好』。」</li>
+                        <li>PM 提供了清晰的目標，但保留了足夠的彈性，讓跨職能團隊能共同激盪出最佳方案，而非被細節綁死。</li>
+                        <li>此模式造就了活動初期「快速對焦、釐清、達成共識」的高峰體驗。</li>
+                    </ul>
+                     <hr class="my-6 border-slate-200">
+                    <h3 class="font-bold text-xl mb-4" style="color: var(--main-color-dark-text);">混亂中的轉機：API 深度體檢</h3>
+                    <ul class="custom-list text-slate-700">
+                        <li><strong>技能斷點</strong>：由於初期錯誤地只邀請了後端工程師，團隊一度因不熟悉前端框架而陷入停滯。</li>
+                        <li><strong>設計盲點浮現</strong>：但也正是在這個混亂期，團隊透過實際操作原型，發現部分 API 在真實情境下根本不敷使用。</li>
+                        <li><strong>敏捷的現場修正</strong>：我們當場就能討論並快速微調 API 設計，這遠比開發後期修改的成本低得多。</li>
+                        <li><strong>Hackathon 的新價值</strong>：它不僅是開發活動，更是一個絕佳的「API 實境壓力測試」機會。</li>
+                    </ul>
+                </div>
+                <div id="tab-content-2" class="tab-content hidden">
+                    <h3 class="font-bold text-xl mb-4" style="color: var(--main-color);">具體的成果：一個真實可用的原型</h3>
+                    <ul class="custom-list text-slate-700">
+                        <li>儘管過程曲折，最終成功在 Local Server 上跑起串接真實 API 的原型。</li>
+                        <li>此成果證明了整個想法的可行性。</li>
+                        <li>前端工程師證實 AI 產出的程式碼復用性高，可直接沿用，這是對 AI 價值的重要肯定。</li>
+                    </ul>
+                    <hr class="my-6 border-slate-200">
+                    <h3 class="font-bold text-xl mb-4" style="color: var(--main-color-dark-text);">隱藏的成本：超越程式碼的代價</h3>
+                    <ul class="custom-list text-slate-700">
+                        <li><strong>時間失控</strong>：活動嚴重超時，影響了團隊的精力與工作生活平衡。</li>
+                        <li><strong>引入技術債</strong>：為求速成，採用了不安全的 CORS 臨時解法，需要在後續版本中償還。</li>
+                        <li><strong>最後一哩路的挑戰</strong>：未能成功部署到測試環境，突顯了部署前置作業的重要性，也讓「成功」的定義變得相對模糊。</li>
+                    </ul>
+                </div>
+                <div id="tab-content-3" class="tab-content">
+                    <h3 class="font-bold text-xl mb-4" style="color: var(--main-color);">加速器：從 0 到 1，快得驚人</h3>
+                    <ul class="custom-list text-slate-700">
+                        <li>AI 在前端作業上能節省大量工時，讓 PM 能透過精準描述，快速生成可互動的 MVP。</li>
+                        <li>這使得團隊與客戶能跳過傳統的線框圖階段，直接在「真實」的介面上進行驗證與回饋。</li>
+                    </ul>
+                    <hr class="my-6 border-slate-200">
+                    <h3 class="font-bold text-xl mb-4" style="color: var(--main-color-dark-text);">整合挑戰：惱人的「介略問題」</h3>
+                    <ul class="custom-list text-slate-700">
+                        <li><strong>一次性產物</strong>：AI 產出的程式碼散落且缺乏架構，難以被打包出來，導致後續的迭代開發難以直接沿用。</li>
+                        <li><strong>缺乏設計規範</strong>：AI 未能遵循公司預設的主題和顏色規範，需要額外手動調整。</li>
+                        <li><strong>定位的轉變</strong>：我們學到，AI 產出的 MVP 更適合一次性的驗證，應將其定位為「最高保真度的需求文件」，而非「產品的初版程式碼」。</li>
+                    </ul>
+                </div>
+                 <div id="tab-content-4" class="tab-content hidden">
+                    <h3 class="font-bold text-xl mb-4" style="color: var(--main-color);">PM & Frontend 協作</h3>
+                    <p class="text-slate-600 mb-6">這是一個專為 PM 與前端工程師設計的高效協作流程，旨在利用 AI 大幅加速從需求到可交付前端元件的過程，解決「介略問題」。</p>
+                    
+                    <div class="space-y-6">
+                        <div class="inner-card">
+                            <h4 class="font-semibold text-lg mb-2">工作流程</h4>
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-2">
+                                <div>
+                                    <strong class="text-slate-800">PM 作業流程</strong>
+                                    <ol class="list-decimal list-inside mt-2 text-sm text-slate-600 space-y-2">
+                                        <li><strong>發想功能需求</strong>：以單一功能為單位 (如：使用者註冊模組)。</li>
+                                        <li><strong>使用 Gemini AI 產出程式碼</strong>：
+                                            <ul class="custom-list">
+                                                <li>開啟 Gemini，複製 `GEMINI_PROMPT_TEMPLATE.md` 範本。</li>
+                                                <li>根據功能描述，請 AI 產出 React 元件、型別定義及 mock data。</li>
+                                                <li>確認產出格式正確。</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>貼入指定檔案</strong>：將程式碼暫存於 `libs/generated/<功能名稱>.tsx`。</li>
+                                    </ol>
+                                </div>
+                                <div>
+                                    <strong class="text-slate-800">Frontend Developer 導入流程</strong>
+                                     <ol start="4" class="list-decimal list-inside mt-2 text-sm text-slate-600 space-y-2">
+                                        <li><strong>使用 AI 協助轉換</strong>：打開 Claude 或 Cursor，貼入 `AI_BUILDING_PROMPT.md` 指令，請 AI 協助重構。</li>
+                                        <li><strong>拆解與搬移</strong>：AI 會將暫存檔自動拆解至正式專案結構（routes, types, mocks）。</li>
+                                        <li><strong>整合與測試</strong>：實作對應路由，並完成最終整合與測試。</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="inner-card">
+                            <h4 class="font-semibold text-lg mb-2">文件與 Prompt 設計</h4>
+                            <p class="text-sm text-slate-600 mb-4">我們將 Prompt 標準化為文件，確保每次 AI 產出的品質與格式一致。</p>
+                            <div>
+                                <h5 class="font-bold mb-2">GEMINI_PROMPT.md (PM 使用)</h5>
+                                <pre class="code-block text-xs"><code># Gemini AI 專案程式碼產出標準 Prompt
+請根據下列規格與要求，產出**完全符合專案結構**的 React Component、型別定義與 mock data，並分別以 markdown code block 輸出，且每段請加上檔名註解。
+
+## 專案技術規格
+- React 19 + TypeScript（strict mode）
+- React Router v7（使用 routes 配置）
+- TailwindCSS 4.x
+- Vite 構建（不需考慮 Next.js）
+- 型別需準確（interface）
+- 專案使用 alias：`~/*` 代表 `./app/*`
+- 輸出的程式碼必須用 markdown code block 包住，並加上檔名註解
+
+## 專案結構要求
+- React Component 請放在 `app/routes/<feature-name>.tsx`
+- 型別定義請放在 `app/types/<feature-name>.ts`
+- mock data 請放在 `app/mocks/<feature-name>.ts`
+- 路由請以 `routes.ts` 配置，path 格式為 `/<feature-name>`
+
+## 產出格式範例
+`filename="app/routes/feature-name.tsx"`
+// 這裡是 React Component 程式碼
+...
+
+額外注意事項
+- 型別請盡量明確，避免 any
+- 請勿產生與 Next.js 相關語法
+- 請勿省略必要的 import
+- 請確保所有檔案皆可直接複製貼上至專案對應路徑即可運作
+- 若有多個元件/型別/mock，請分開多個 code block 並註明檔名
+</code></pre>
+                            </div>
+                             <div class="mt-4">
+                                <h5 class="font-bold mb-2">AI_BUILDING_PROMPT.md (Frontend 使用)</h5>
+                                <pre class="code-block text-xs"><code>請幫我將以下这个檔案 `libs/generated/xxxxx.tsx` 的內容，整理成符合我目前專案的結構與邏輯的功能，請根據以下規範搬遷：
+
+- 主元件請放到 `app/routes/xxx.tsx`
+- 如果有型別請拆到 `app/types/xxx.ts`
+- mock data 請拆到 `app/mocks/xxx.ts`
+- 請幫我在 `app/routes.ts` 中新增對應的 route（以 `path: "/task-form"`）
+- 請確保使用 TailwindCSS，並維持合理的 className 結構
+- 不需要進行 fetch 或 API 串接
+- 如果有可改善之處也請一起調整
+</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="tab-content-5" class="tab-content hidden">
+                    <h3 class="font-bold text-xl mb-4" style="color: var(--main-color);">團隊 Prompt Playbook</h3>
+                    <p class="text-slate-600 mb-6">這裡是我們團隊共享的 Prompt 知識庫。記錄有效的 Prompt，讓成功的經驗可以被複製、傳承。所有內容都會即時同步。</p>
+                    
+                    <!-- Add new prompt card -->
+                    <div class="prompt-card bg-slate-50 border-dashed">
+                        <h4 class="font-bold text-lg mb-4 text-slate-700">新增一則 Prompt</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label for="new-scenario" class="block text-sm font-medium text-slate-600 mb-1">使用情境</label>
+                                <input type="text" id="new-scenario" class="prompt-input" placeholder="例如：生成一個 Tailwind CSS 按鈕">
+                            </div>
+                            <div>
+                                <label for="new-contributor" class="block text-sm font-medium text-slate-600 mb-1">貢獻者</label>
+                                <input type="text" id="new-contributor" class="prompt-input" placeholder="你的名字">
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                             <label for="new-prompt" class="block text-sm font-medium text-slate-600 mb-1">提示語 (Prompt)</label>
+                             <textarea id="new-prompt" rows="4" class="prompt-textarea" placeholder="請在此貼上你的提示語..."></textarea>
+                        </div>
+                        <div class="mb-4">
+                             <label for="new-notes" class="block text-sm font-medium text-slate-600 mb-1">備註/訣竅</label>
+                             <textarea id="new-notes" rows="2" class="prompt-textarea" placeholder="使用此 Prompt 的技巧或注意事項..."></textarea>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex space-x-2">
+                                <button id="export-data-btn" class="px-3 py-2 rounded-lg text-white font-semibold bg-green-500 hover:bg-green-600 transition-colors">匯出資料</button>
+                                <button id="import-data-btn" class="px-3 py-2 rounded-lg text-white font-semibold bg-blue-500 hover:bg-blue-600 transition-colors">匯入資料</button>
+                                <button id="backup-data-btn" class="px-3 py-2 rounded-lg text-white font-semibold bg-yellow-500 hover:bg-yellow-600 transition-colors">創建備份</button>
+                            </div>
+                            <button id="add-prompt-btn" class="px-5 py-2 rounded-lg text-white font-semibold" style="background-color: var(--main-color);">新增</button>
+                        </div>
+                    </div>
+
+                    <hr class="my-8 border-slate-300">
+
+                    <!-- Prompt list -->
+                    <div id="playbook-list">
+                         <p class="text-center text-slate-500 py-8">正在從雲端載入 Playbook...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Hackathon 1.0 Flow -->
+        <section id="playbook-1" class="mb-16">
+            <h2 class="text-3xl font-bold text-center mb-4">我們走過的路：Hackathon 1.0 流程還原</h2>
+            <p class="text-center text-slate-600 mb-12 max-w-2xl mx-auto">這是在我們第一次活動中，實際發生的流程與各角色的任務。這份紀錄是我們優化流程的基礎。</p>
+            <div class="space-y-8">
+                <div class="playbook-card">
+                    <h3 class="text-xl font-bold mb-4 border-b pb-2">活動前：點子與籌備</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="role-content">
+                            <label class="font-semibold text-lg text-slate-700">【PM】</label>
+                            <ul class="custom-list mt-2 text-sm text-slate-600">
+                                <li><strong>探索AI潛力</strong>：認知到 AI 能將 Wireframe 提升為可互動原型，思考如何將此能力最大化，使其產出具備再利用價值。</li>
+                                <li><strong>發起活動</strong>：基於驗證 AI 原型可用性的想法，產生了舉辦黑客松的點子。</li>
+                                <li><strong>選定題目</strong>：選擇一個全新的「AI 排班」專案作為試驗田。（小發現：全新的內容更適合 AI，因不受限於現有框架，能讓 AI 最好地從 0 開始發揮。）</li>
+                                <li><strong>事前溝通</strong>：活動前兩天，向團隊發出通知，提供主題、<a href="https://gemini.google.com/share/fd0589aae148" target="_blank" rel="noopener noreferrer" class="link">初步原型連結</a>及相關資料 (Staff_files.xlsx)。</li>
+                            </ul>
+                        </div>
+                        <div class="role-content">
+                            <label class="font-semibold text-lg text-slate-700">【工程師】</label>
+                             <ul class="custom-list mt-2 text-sm text-slate-600">
+                                <li>主要處於被動接收邀請的狀態。</li>
+                                <li>對活動的具體需求與技術細節了解有限。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="playbook-card">
+                    <h3 class="text-xl font-bold mb-4 border-b pb-2">活動中：討論、執行與應變</h3>
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="role-content">
+                            <h4 class="font-semibold text-lg text-slate-700">第一階段：需求對焦與討論 (約 45 分鐘)</h4>
+                            <ul class="custom-list mt-2 text-sm text-slate-600">
+                                <li><strong>【PM】</strong>主導說明需求、演示 AI 原型，引導團隊討論。</li>
+                                <li><strong>【工程師】</strong>參與討論，確認共識與 Hackathon 目標，並在過程中發現既有 API 不敷使用的問題。</li>
+                            </ul>
+                        </div>
+                        <div class="role-content">
+                            <h4 class="font-semibold text-lg text-slate-700">第二階段：實作、挑戰與救援</h4>
+                            <ul class="custom-list mt-2 text-sm text-slate-600">
+                                <li><strong>【PM】</strong>根據討論結果，與 Gemini 進行多輪迭代 (
+                                    <a href="https://gemini.google.com/share/817ef1457c05" target="_blank" rel="noopener noreferrer" class="link">v1</a>, 
+                                    <a href="https://g.co/gemini/share/db2be90f6760" target="_blank" rel="noopener noreferrer" class="link">v2</a>, 
+                                    <a href="https://gemini.google.com/share/3a52d5310be8" target="_blank" rel="noopener noreferrer" class="link">v3</a>
+                                )，即時修改前端程式碼；在發現開發停滯後，緊急尋求前端工程師支援。</li>
+                                <li><strong>【後端工程師】</strong>著手修正先前討論發現的 API 問題；在後續整合階段，協助解決 API 格式、Auth、CORS 等問題。</li>
+                                <li><strong>【前端工程師 (後期加入)】</strong>接手 Gemini 產出的 Code，將其調整為更符合團隊框架的模板，並將 Mockup 資料替換為真實 API。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Playbook 2.0 Section -->
+        <section id="playbook-2" class="bg-slate-100 -mx-6 md:-mx-10 px-6 md:px-10 py-16 rounded-xl">
+             <h2 class="text-3xl font-bold text-center mb-4">我們前進的方向：Hackathon 2.0 優化劇本</h2>
+             <p class="text-center text-slate-600 mb-12 max-w-2xl mx-auto">這不僅是一份活動流程，更是一套從「發想到價值落地」的完整行動指南，將我們的學習融入其中。</p>
+            
+            <div class="space-y-12">
+                <!-- Phase 1 -->
+                <div>
+                    <h3 class="text-2xl font-bold mb-6 border-b-2 pb-2" style="color: var(--main-color-dark-text); border-color: var(--main-color-lighter);">階段一：籌備與共識 (活動前)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="playbook-card">
+                            <h4 class="font-bold text-lg mb-2">1. 點子與原型</h4>
+                            <ul class="space-y-2 text-sm text-slate-600 flex-grow custom-list">
+                                <li><strong>【PM】</strong>產生核心想法，用 AI 建立原型，為討論建立具體基礎。</li>
+                            </ul>
+                        </div>
+                        <div class="playbook-card">
+                            <h4 class="font-bold text-lg mb-2">2. 建立共識與定義</h4>
+                            <ul class="space-y-2 text-sm text-slate-600 flex-grow custom-list">
+                                <li><strong>【PM + 技術負責人】</strong>共同確立「雙軌開發」原則，明確 AI MVP 的定位是「快速實現的驗證工具」。</li>
+                                <li><strong>【全員】</strong>定義 P0/P1 成功目標與「交接協議」(Handoff Protocol)。</li>
+                            </ul>
+                        </div>
+                        <div class="playbook-card">
+                            <h4 class="font-bold text-lg mb-2">3. 技術預檢與團隊</h4>
+                            <ul class="space-y-2 text-sm text-slate-600 flex-grow custom-list">
+                                <li><strong>【工程師】</strong>(技術負責人) 檢視原型技術棧，產出「必要技能清單」。</li>
+                                <li><strong>【PM】</strong>根據清單，邀請「核心團隊」與「On-Call 專家」。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phase 2 -->
+                <div>
+                    <h3 class="text-2xl font-bold mb-6 border-b-2 pb-2" style="color: var(--main-color-dark-text); border-color: var(--main-color-lighter);">階段二：執行日 (Hackathon Day)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="playbook-card">
+                            <h4 class="font-bold text-lg mb-2">1. 啟動會議 (30分鐘)</h4>
+                            <ul class="space-y-2 text-sm text-slate-600 flex-grow custom-list">
+                                <li><strong>【PM】</strong>闡述目標，展示原型，強調「API 體檢」價值。</li>
+                                <li><strong>【工程師】</strong>提問釐清，共同討論技術方案與分工。</li>
+                            </ul>
+                        </div>
+                        <div class="playbook-card">
+                            <h4 class="font-bold text-lg mb-2">2. 開發衝刺 (3小時)</h4>
+                             <ul class="space-y-2 text-sm text-slate-600 flex-grow custom-list">
+                                <li><strong>【PM】</strong>作為需求澄清者，並協助排除非技術障礙。</li>
+                                <li><strong>【工程師】</strong>前後端配對或分頭編程，專注實作與整合。</li>
+                                <li><strong>【專家顧問】</strong>(On-Call) 在團隊遇到特定難題 (如部署、CORS、設計) 時，提供快速支援。</li>
+                            </ul>
+                        </div>
+                         <div class="playbook-card">
+                            <h4 class="font-bold text-lg mb-2">3. 成果展示 (15分鐘)</h4>
+                            <ul class="space-y-2 text-sm text-slate-600 flex-grow custom-list">
+                                <li><strong>【全員】</strong>共同展示成果，分享過程中的亮點，慶祝成功。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Phase 3 -->
+                 <div>
+                    <h3 class="text-2xl font-bold mb-6 border-b-2 pb-2" style="color: var(--main-color-dark-text); border-color: var(--main-color-lighter);">階段三：覆盤與價值落地 (活動後)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="playbook-card">
+                            <h4 class="font-bold text-lg mb-2">1. Retro (30分鐘)</h4>
+                            <ul class="space-y-2 text-sm text-slate-600 flex-grow custom-list">
+                                 <li><strong>【全員】</strong>坦誠回顧過程，總結學習點，不責備，只求進步。</li>
+                            </ul>
+                        </div>
+                        <div class="playbook-card">
+                            <h4 class="font-bold text-lg mb-2">2. 建立知識庫</h4>
+                            <ul class="space-y-2 text-sm text-slate-600 flex-grow custom-list">
+                                <li><strong>【全員】</strong>將有效的 Prompt 範例、技巧、心法整理至團隊共享的 **Prompt Playbook**。</li>
+                                <li><strong>【PM】</strong>負責維護這份「黑客松學習歷程」文件，使其成為活的資產。</li>
+                            </ul>
+                        </div>
+                        <div class="playbook-card">
+                            <h4 class="font-bold text-lg mb-2">3. 啟動迭代</h4>
+                            <ul class="space-y-2 text-sm text-slate-600 flex-grow custom-list">
+                                <li><strong>【PM】</strong>將 Retro 中發現的技術債（如 CORS）和優化點（如 API 請求時機）轉化為正式的待辦事項。</li>
+                                <li><strong>【工程師】</strong>認領相關任務，規劃進衝刺 (Sprint)，實現**小步快跑的持續改進**。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 編輯 Prompt 模態框 -->
+    <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-slate-800">編輯 Prompt</h3>
+                    <button class="close-edit-modal text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+                </div>
+                
+                <form id="edit-form" class="space-y-4">
+                    <input type="hidden" id="edit-prompt-id">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="edit-scenario" class="block text-sm font-medium text-slate-600 mb-1">使用情境</label>
+                            <input type="text" id="edit-scenario" class="prompt-input w-full" required>
+                        </div>
+                        <div>
+                            <label for="edit-contributor" class="block text-sm font-medium text-slate-600 mb-1">貢獻者</label>
+                            <input type="text" id="edit-contributor" class="prompt-input w-full" required>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="edit-prompt" class="block text-sm font-medium text-slate-600 mb-1">提示語 (Prompt)</label>
+                        <textarea id="edit-prompt" rows="4" class="prompt-textarea w-full" required></textarea>
+                    </div>
+                    
+                    <div>
+                        <label for="edit-notes" class="block text-sm font-medium text-slate-600 mb-1">備註/訣竅</label>
+                        <textarea id="edit-notes" rows="2" class="prompt-textarea w-full"></textarea>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" class="close-edit-modal px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors">取消</button>
+                        <button type="submit" class="px-4 py-2 rounded-lg text-white font-semibold" style="background-color: var(--main-color);">更新</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center py-8 text-slate-500">
+        <p>&copy; 2025 黑客松學習旅程. All Rights Reserved.</p>
+        <p class="text-sm">由 Gemini 根據Mayo排班團隊經驗打造</p>
+    </footer>
+
+    <!-- Local JSON Data Management Logic -->
+    <script>
+        // --- Local Data Management ---
+        class LocalDataManager {
+            constructor() {
+                this.apiBase = 'http://localhost:3000/api'; // 後端 API 地址
+                this.playbookData = { prompts: [], lastUpdated: new Date().toISOString() };
+                this.init();
+            }
+
+            async init() {
+                await this.loadData();
+                this.setupEventListeners();
+                this.renderPlaybook();
+            }
+
+            // 載入 JSON 資料
+            async loadData() {
+                try {
+                    const response = await fetch(`${this.apiBase}/data`);
+                    if (response.ok) {
+                        this.playbookData = await response.json();
+                        console.log('資料載入成功:', this.playbookData);
+                    } else {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                } catch (error) {
+                    console.error('載入資料時發生錯誤:', error);
+                    this.showNotification('無法連接到後端服務器，請確保服務器已啟動', 'error');
+                    this.createDefaultData();
+                }
+            }
+
+            // 創建預設資料
+            createDefaultData() {
+                this.playbookData = {
+                    prompts: [
+                        {
+                            id: "1",
+                            scenario: "生成一個 Tailwind CSS 按鈕",
+                            contributor: "AI助手",
+                            prompt: "請幫我生成一個使用 Tailwind CSS 的按鈕元件，包含 hover 效果和不同的顏色變體。",
+                            notes: "使用 Tailwind CSS 的 utility classes 來快速構建按鈕樣式。",
+                            createdAt: new Date().toISOString()
+                        }
+                    ],
+                    lastUpdated: new Date().toISOString()
+                };
+            }
+
+            // 保存資料到 JSON 文件
+            async saveData() {
+                try {
+                    // 更新最後修改時間
+                    this.playbookData.lastUpdated = new Date().toISOString();
+                    
+                    // 發送請求到後端 API 保存文件
+                    const response = await fetch(`${this.apiBase}/save`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(this.playbookData)
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log('資料已保存到文件:', result);
+                        this.showNotification('資料已保存到文件', 'success');
+                        return true;
+                    } else {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || '保存失敗');
+                    }
+                } catch (error) {
+                    console.error('保存資料時發生錯誤:', error);
+                    this.showNotification(`保存失敗: ${error.message}`, 'error');
+                    
+                    // 備用方案：保存到 localStorage
+                    try {
+                        localStorage.setItem('playbookData', JSON.stringify(this.playbookData));
+                        this.showNotification('資料已保存到本地備用存儲', 'warning');
+                    } catch (localError) {
+                        console.error('本地備用存儲也失敗:', localError);
+                    }
+                    
+                    return false;
+                }
+            }
+
+            // 新增 Prompt
+            async addPrompt(scenario, contributor, promptText, notes) {
+                const newPrompt = {
+                    id: this.generateId(),
+                    scenario: scenario.trim(),
+                    contributor: contributor.trim(),
+                    prompt: promptText.trim(),
+                    notes: notes.trim(),
+                    createdAt: new Date().toISOString()
+                };
+
+                this.playbookData.prompts.push(newPrompt);
+                await this.saveData();
+                this.renderPlaybook();
+                
+                return newPrompt;
+            }
+
+            // 更新 Prompt
+            async updatePrompt(id, updates) {
+                const promptIndex = this.playbookData.prompts.findIndex(p => p.id === id);
+                if (promptIndex !== -1) {
+                    this.playbookData.prompts[promptIndex] = {
+                        ...this.playbookData.prompts[promptIndex],
+                        ...updates,
+                        updatedAt: new Date().toISOString()
+                    };
+                    await this.saveData();
+                    this.renderPlaybook();
+                    return true;
+                }
+                return false;
+            }
+
+            // 刪除 Prompt
+            async deletePrompt(id) {
+                const promptIndex = this.playbookData.prompts.findIndex(p => p.id === id);
+                if (promptIndex !== -1) {
+                    this.playbookData.prompts.splice(promptIndex, 1);
+                    await this.saveData();
+                    this.renderPlaybook();
+                    return true;
+                }
+                return false;
+            }
+
+            // 生成唯一 ID
+            generateId() {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2);
+            }
+
+            // 渲染 Playbook
+            renderPlaybook() {
+                const playbookList = document.getElementById('playbook-list');
+                if (!playbookList) return;
+
+                playbookList.innerHTML = '';
+
+                if (this.playbookData.prompts.length === 0) {
+                    playbookList.innerHTML = '<p class="text-center text-slate-500 py-8">Playbook 目前是空的，新增第一則來幫助團隊吧！</p>';
+                    return;
+                }
+
+                // 按創建時間排序，最新的在前
+                const sortedPrompts = [...this.playbookData.prompts].sort((a, b) => 
+                    new Date(b.createdAt) - new Date(a.createdAt)
+                );
+
+                sortedPrompts.forEach(prompt => {
+                    const card = document.createElement('div');
+                    card.className = 'prompt-card';
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-lg" style="color: var(--main-color-dark-text);">${this.escapeHTML(prompt.scenario)}</h4>
+                            <div class="flex space-x-2">
+                                <button data-id="${prompt.id}" class="edit-btn text-slate-400 hover:text-blue-500 text-lg leading-none px-2 py-1 rounded hover:bg-blue-50" title="編輯">✏️</button>
+                                <button data-id="${prompt.id}" class="delete-btn text-slate-400 hover:text-red-500 text-2xl leading-none px-2 py-1 rounded hover:bg-red-50" title="刪除">&times;</button>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-400 mb-4">由 ${this.escapeHTML(prompt.contributor)} 貢獻</p>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-slate-600 mb-1">提示語 (Prompt)</label>
+                            <textarea readonly class="prompt-textarea bg-slate-100">${this.escapeHTML(prompt.prompt)}</textarea>
+                        </div>
+                         <div class="mb-2">
+                            <label class="block text-sm font-medium text-slate-600 mb-1">備註/訣竅</label>
+                            <div class="prose prose-sm max-w-none text-slate-600 bg-slate-100 p-3 rounded-md min-h-[40px]">${this.escapeHTML(prompt.notes) || '無'}</div>
+                        </div>
+                        <div class="text-xs text-slate-400 mt-2">
+                            創建時間: ${new Date(prompt.createdAt).toLocaleString('zh-TW')}
+                            ${prompt.updatedAt ? `<br>更新時間: ${new Date(prompt.updatedAt).toLocaleString('zh-TW')}` : ''}
+                        </div>
+                    `;
+                    playbookList.appendChild(card);
+                });
+
+                // 綁定編輯和刪除事件
+                this.bindPromptEvents();
+            }
+
+            // 綁定 Prompt 事件
+            bindPromptEvents() {
+                // 刪除事件
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const id = e.target.dataset.id;
+                        const isConfirmed = window.confirm("確定要刪除這則 Prompt 嗎？");
+                        if (isConfirmed) {
+                            await this.deletePrompt(id);
+                            this.showNotification('Prompt 已刪除', 'success');
+                        }
+                    });
+                });
+
+                // 編輯事件
+                document.querySelectorAll('.edit-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.target.dataset.id;
+                        this.openEditModal(id);
+                    });
+                });
+            }
+
+            // 開啟編輯模態框
+            openEditModal(id) {
+                const prompt = this.playbookData.prompts.find(p => p.id === id);
+                if (!prompt) return;
+
+                // 填充編輯表單
+                document.getElementById('edit-scenario').value = prompt.scenario;
+                document.getElementById('edit-contributor').value = prompt.contributor;
+                document.getElementById('edit-prompt').value = prompt.prompt;
+                document.getElementById('edit-notes').value = prompt.notes;
+                document.getElementById('edit-prompt-id').value = prompt.id;
+
+                // 顯示編輯模態框
+                document.getElementById('edit-modal').classList.remove('hidden');
+                document.getElementById('edit-modal').classList.add('flex');
+            }
+
+            // 設置事件監聽器
+            setupEventListeners() {
+                // 新增 Prompt 按鈕
+                const addPromptBtn = document.getElementById('add-prompt-btn');
+                if (addPromptBtn) {
+                    addPromptBtn.addEventListener('click', async () => {
+                        const scenario = document.getElementById('new-scenario').value.trim();
+                        const contributor = document.getElementById('new-contributor').value.trim();
+                        const promptText = document.getElementById('new-prompt').value.trim();
+                        const notes = document.getElementById('new-notes').value.trim();
+
+                        if (!scenario || !contributor || !promptText) {
+                            this.showNotification('「使用情境」、「貢獻者」、「提示語」為必填欄位！', 'error');
+                            return;
+                        }
+
+                        try {
+                            await this.addPrompt(scenario, contributor, promptText, notes);
+                            
+                            // 清空輸入欄位
+                            document.getElementById('new-scenario').value = '';
+                            document.getElementById('new-contributor').value = '';
+                            document.getElementById('new-prompt').value = '';
+                            document.getElementById('new-notes').value = '';
+
+                            this.showNotification('Prompt 新增成功！', 'success');
+                        } catch (error) {
+                            console.error('新增 Prompt 時發生錯誤:', error);
+                            this.showNotification('新增失敗，請稍後再試', 'error');
+                        }
+                    });
+                }
+
+                // 編輯表單提交
+                const editForm = document.getElementById('edit-form');
+                if (editForm) {
+                    editForm.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        
+                        const id = document.getElementById('edit-prompt-id').value;
+                        const scenario = document.getElementById('edit-scenario').value.trim();
+                        const contributor = document.getElementById('edit-contributor').value.trim();
+                        const promptText = document.getElementById('edit-prompt').value.trim();
+                        const notes = document.getElementById('edit-notes').value.trim();
+
+                        if (!scenario || !contributor || !promptText) {
+                            this.showNotification('所有欄位都必須填寫！', 'error');
+                            return;
+                        }
+
+                        try {
+                            await this.updatePrompt(id, {
+                                scenario,
+                                contributor,
+                                prompt: promptText,
+                                notes
+                            });
+
+                            this.closeEditModal();
+                            this.showNotification('Prompt 更新成功！', 'success');
+                        } catch (error) {
+                            console.error('更新 Prompt 時發生錯誤:', error);
+                            this.showNotification('更新失敗，請稍後再試', 'error');
+                        }
+                    });
+                }
+
+                // 關閉編輯模態框
+                const closeEditBtns = document.querySelectorAll('.close-edit-modal');
+                closeEditBtns.forEach(btn => {
+                    btn.addEventListener('click', () => this.closeEditModal());
+                });
+
+                // 點擊模態框背景關閉
+                const editModal = document.getElementById('edit-modal');
+                if (editModal) {
+                    editModal.addEventListener('click', (e) => {
+                        if (e.target === editModal) {
+                            this.closeEditModal();
+                        }
+                    });
+                }
+
+                // 匯出資料按鈕
+                const exportBtn = document.getElementById('export-data-btn');
+                if (exportBtn) {
+                    exportBtn.addEventListener('click', () => this.exportData());
+                }
+
+                // 匯入資料按鈕
+                const importBtn = document.getElementById('import-data-btn');
+                if (importBtn) {
+                    importBtn.addEventListener('click', () => this.importData());
+                }
+
+                // 備份資料按鈕
+                const backupBtn = document.getElementById('backup-data-btn');
+                if (backupBtn) {
+                    backupBtn.addEventListener('click', () => this.createBackup());
+                }
+            }
+
+            // 關閉編輯模態框
+            closeEditModal() {
+                document.getElementById('edit-modal').classList.add('hidden');
+                document.getElementById('edit-modal').classList.remove('flex');
+            }
+
+            // 顯示通知
+            showNotification(message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 transition-all duration-300 ${
+                    type === 'success' ? 'bg-green-500 text-white' :
+                    type === 'error' ? 'bg-red-500 text-white' :
+                    'bg-blue-500 text-white'
+                }`;
+                notification.textContent = message;
+
+                document.body.appendChild(notification);
+
+                // 3秒後自動消失
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                }, 3000);
+            }
+
+            // 匯出資料
+            exportData() {
+                const dataStr = JSON.stringify(this.playbookData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = '黑克松資料.json';
+                link.click();
+                
+                URL.revokeObjectURL(url);
+                this.showNotification('資料匯出成功！', 'success');
+            }
+
+            // 匯入資料
+            importData() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                
+                input.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    try {
+                        const text = await file.text();
+                        const importedData = JSON.parse(text);
+                        
+                        if (importedData.prompts && Array.isArray(importedData.prompts)) {
+                            this.playbookData = importedData;
+                            await this.saveData();
+                            this.renderPlaybook();
+                            this.showNotification('資料匯入成功！', 'success');
+                        } else {
+                            throw new Error('無效的資料格式');
+                        }
+                    } catch (error) {
+                        console.error('匯入資料時發生錯誤:', error);
+                        this.showNotification('匯入失敗，請檢查檔案格式', 'error');
+                    }
+                };
+
+                input.click();
+            }
+
+            // 創建備份
+            async createBackup() {
+                try {
+                    const response = await fetch(`${this.apiBase}/backup`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        this.showNotification(`備份創建成功: ${result.backupFile}`, 'success');
+                    } else {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || '備份失敗');
+                    }
+                } catch (error) {
+                    console.error('創建備份時發生錯誤:', error);
+                    this.showNotification(`備份失敗: ${error.message}`, 'error');
+                }
+            }
+
+            // HTML 轉義
+            escapeHTML(str) {
+                const p = document.createElement("p");
+                p.appendChild(document.createTextNode(str || ''));
+                return p.innerHTML;
+            }
+        }
+
+        // --- Tab Switching Logic ---
+        const tabs = [document.getElementById('tab-btn-1'), document.getElementById('tab-btn-2'), document.getElementById('tab-btn-3'), document.getElementById('tab-btn-4'), document.getElementById('tab-btn-5')];
+        const contents = [document.getElementById('tab-content-1'), document.getElementById('tab-content-2'), document.getElementById('tab-content-3'), document.getElementById('tab-content-4'), document.getElementById('tab-content-5')];
+
+        function switchTab(tabIndex) {
+            tabs.forEach((tab, index) => {
+                const content = contents[index];
+                if(!tab || !content) return;
+
+                if ((index + 1) === tabIndex) {
+                    tab.classList.remove('tab-inactive');
+                    tab.classList.add('tab-active');
+                    content.classList.remove('hidden');
+                } else {
+                    tab.classList.remove('tab-active');
+                    tab.classList.add('tab-inactive');
+                    content.classList.add('hidden');
+                }
+            });
+        }
+        window.switchTab = switchTab; // Make it globally accessible
+
+        // 初始化
+        window.onload = function() {
+            switchTab(1);
+            
+            // 初始化本地資料管理器
+            window.dataManager = new LocalDataManager();
+        };
+    </script>
+</body>
+</html>

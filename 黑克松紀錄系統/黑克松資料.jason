@@ -1,0 +1,29 @@
+{
+  "prompts": [
+    {
+      "id": "1",
+      "scenario": "生成一個 Tailwind CSS 按鈕",
+      "contributor": "AI助手",
+      "prompt": "請幫我生成一個使用 Tailwind CSS 的按鈕元件，包含 hover 效果和不同的顏色變體。",
+      "notes": "使用 Tailwind CSS 的 utility classes 來快速構建按鈕樣式。",
+      "createdAt": "2025-01-20T10:00:00.000Z"
+    },
+    {
+      "id": "2", 
+      "scenario": "React 元件重構",
+      "contributor": "前端工程師",
+      "prompt": "請幫我將這個 React 元件重構為更符合專案結構的版本，並確保使用 TypeScript。",
+      "notes": "注意型別定義的準確性，避免使用 any 型別。",
+      "createdAt": "2025-01-20T11:30:00.000Z"
+    },
+    {
+      "id": "3",
+      "scenario": "API 串接測試",
+      "contributor": "後端工程師", 
+      "prompt": "請幫我生成一個測試 API 串接的範例，包含錯誤處理和 loading 狀態。",
+      "notes": "使用 try-catch 來處理錯誤，並提供適當的使用者回饋。",
+      "createdAt": "2025-01-20T14:15:00.000Z"
+    }
+  ],
+  "lastUpdated": "2025-01-20T14:15:00.000Z"
+}

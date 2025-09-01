@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apollo AI 排班系統 - 績效價值導向原型 v7.2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --mayo-blue-50: #F2F7FF; --mayo-blue-100: #E6EFFF; --mayo-blue-400: #5A96FF; --mayo-blue-500: #337DFF; --mayo-blue-600: #2964CC;
+            --mayo-gray-50: #FAFAFA; --mayo-gray-100: #F5F5F5; --mayo-gray-200: #E5E5E5; --mayo-gray-300: #D4D4D4; --mayo-gray-500: #737373; --mayo-gray-700: #404040; --mayo-gray-800: #262626;
+            --mayo-green-100: #D1FAE5; --mayo-green-500: #10B981; --mayo-green-600: #059669;
+            --mayo-red-100: #FEE2E2; --mayo-red-500: #EF4444; --mayo-red-600: #DC2626;
+            --mayo-orange-500: #F97316;
+            --mayo-purple-500: #8B5CF6;
+        }
+        body { font-family: 'Inter', 'Noto Sans TC', sans-serif; background-color: #F3F4F6; min-width: 1280px; }
+        .font-noto { font-family: 'Noto Sans TC', sans-serif; }
+        .app-grid { display: grid; grid-template-columns: 256px 1fr; height: 100vh; }
+        
+        /* --- General Component Styles --- */
+        .tab-btn { transition: all 0.2s ease; border-bottom: 2px solid transparent; }
+        .tab-btn.active { color: var(--mayo-blue-600); border-bottom-color: var(--mayo-blue-600); }
+        .star-rating .star { cursor: pointer; color: #d1d5db; transition: color 0.2s; }
+        .star-rating .star:hover, .star-rating .star.selected { color: #f59e0b; }
+        .skill-tag { background-color: var(--mayo-gray-200); color: var(--mayo-gray-800); padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
+        .skill-tag.primary { background-color: var(--mayo-blue-500); color: white; }
+        .skill-tag .star { font-size: 14px; color: #f59e0b; }
+        
+        /* --- Employee Preferences Styles --- */
+        .batch-edit-table th, .batch-edit-table td { padding: 8px; text-align: left; border-bottom: 1px solid var(--mayo-gray-200); }
+        .batch-edit-table th { background-color: var(--mayo-gray-50); font-weight: 600; font-size: 14px; color: var(--mayo-gray-700); }
+        .batch-edit-cell { cursor: pointer; border: 2px dashed transparent; border-radius: 8px; padding: 4px; min-height: 52px; transition: all 0.2s; }
+        .batch-edit-cell:hover { border-color: var(--mayo-blue-400); background-color: var(--mayo-blue-50); }
+        .cell-time-slot { font-size: 12px; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
+        .cell-time-slot.priority { background-color: var(--mayo-green-100); color: var(--mayo-green-600); }
+        .cell-time-slot.available { background-color: var(--mayo-blue-100); color: var(--mayo-blue-600); }
+        .cell-time-slot.forbidden { background-color: var(--mayo-red-100); color: var(--mayo-red-600); text-decoration: line-through; }
+        .cell-unavailable { font-size: 12px; color: var(--mayo-red-500); font-weight: 500; }
+
+        .timeline-ruler { display: grid; grid-template-columns: repeat(8, 1fr); text-align: center; font-size: 10px; color: var(--mayo-gray-500); padding-bottom: 2px; }
+        .timeline-container { position: relative; width: 100%; height: 40px; background-color: var(--mayo-gray-100); border-radius: 6px; cursor: crosshair; overflow: hidden; border: 1px solid var(--mayo-gray-200); }
+        .timeline-grid { position: absolute; width: 100%; height: 100%; display: grid; grid-template-columns: repeat(24, 1fr); }
+        .timeline-hour-marker { border-right: 1px dotted var(--mayo-gray-300); }
+        .timeline-slot { position: absolute; height: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .timeline-slot.priority { background-color: rgba(16, 185, 129, 0.7); border-left: 2px solid var(--mayo-green-600); border-right: 2px solid var(--mayo-green-600); }
+        .timeline-slot.available { background-color: rgba(51, 125, 255, 0.7); border-left: 2px solid var(--mayo-blue-600); border-right: 2px solid var(--mayo-blue-600); }
+        .timeline-slot.forbidden { background-color: rgba(239, 68, 68, 0.6); border-left: 2px solid var(--mayo-red-600); border-right: 2px solid var(--mayo-red-600); }
+        .timeline-slot:hover .slot-tooltip { opacity: 1; }
+        .slot-tooltip { position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); background-color: var(--mayo-gray-800); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+        .timeline-selection { position: absolute; height: 100%; border: 1px dashed var(--mayo-blue-500); pointer-events: none; }
+        .timeline-selection.priority { background-color: rgba(16, 185, 129, 0.3); border-color: var(--mayo-green-500); }
+        .timeline-selection.available { background-color: rgba(51, 125, 255, 0.3); border-color: var(--mayo-blue-500); }
+        .timeline-selection.forbidden { background-color: rgba(239, 68, 68, 0.3); border-color: var(--mayo-red-500); }
+
+        /* --- Demand Planning Styles --- */
+        .demand-table th, .demand-table td { padding: 8px; text-align: center; border-bottom: 1px solid var(--mayo-gray-200); }
+        .demand-table th { background-color: var(--mayo-gray-50); font-weight: 600; font-size: 14px; color: var(--mayo-gray-700); }
+        .timeslot-header { cursor: pointer; transition: background-color 0.2s; }
+        .timeslot-header:hover { background-color: var(--mayo-blue-100); }
+        .tier-indicator { display: block; font-size: 10px; font-weight: bold; margin-top: 2px; border-radius: 4px; padding: 1px 0; }
+        .tier-SSS { color: #7f1d1d; background-color: #fecaca; } /* Red */
+        .tier-A { color: #9a3412; background-color: #fed7aa; } /* Orange */
+        .tier-B { color: #155e75; background-color: #a5f3fc; } /* Cyan */
+        .tier-C { color: #1e40af; background-color: #dbeafe; } /* Blue */
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div id="app" class="app-grid">
+        <!-- Sidebar -->
+        <aside class="bg-[#0B2A52] p-4 flex flex-col text-white space-y-4 flex-shrink-0">
+            <div class="px-2 mb-4"><img src="https://i.postimg.cc/d3bbTNgH/logo-xe-3x.png" alt="Apollo Logo" class="h-8"></div>
+            <nav id="main-nav" class="flex-grow space-y-4 text-gray-300 font-noto">
+                <details open><summary class="font-semibold cursor-pointer py-1">管理專區</summary>
+                    <div class="pl-4 mt-2 space-y-1">
+                        <a href="#demand" data-page="demand" class="nav-link block p-2 rounded-md">人力需求規劃</a>
+                        <a href="#employee_management" data-page="employee_management" class="nav-link block p-2 rounded-md">員工管理</a>
+                        <a href="#ai_strategy" data-page="ai_strategy" class="nav-link block p-2 rounded-md">AI排班策略</a>
+                    </div>
+                </details>
+                <details><summary class="font-semibold cursor-pointer py-1">資料管理</summary>
+                    <div class="pl-4 mt-2 space-y-1">
+                        <button id="load-json-btn" class="w-full text-left block p-2 rounded-md hover:bg-blue-600">載入JSON檔案</button>
+                        <button id="export-json-btn" class="w-full text-left block p-2 rounded-md hover:bg-blue-600">匯出JSON檔案</button>
+                    </div>
+                </details>
+            </nav>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <div id="page-container" class="flex-1 flex flex-col h-screen overflow-auto"></div>
+    </div>
+
+    <!-- File Input for JSON Loading -->
+    <input type="file" id="json-file-input" accept=".json" style="display: none;">
+    
+    <!-- Modal Container -->
+    <div id="modal-container" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] transition-opacity p-4"><div id="modal-content" class="bg-white rounded-lg shadow-xl w-full max-w-5xl transform transition-all flex flex-col"></div></div>
+    <div id="toast" class="hidden fixed top-20 right-5 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-[1100]"><p id="toast-message"></p></div>
+    
+    <script type="module">
+
+        // --- Global State & Data ---
+        let pageContainer;
+        let appState = {
+            currentPage: 'demand',
+            staffData: {},
+            unitMetadata: {},
+            allSchedules: {},
+            currentUnitId: 'kitchen',
+            currentTemplateId: null,
+            uiState: {
+                selectedEmployees: new Set(),
+                copiedPreference: null
+            },
+        };
+
+        // --- JSON Data Loading ---
+        async function loadJSONData() {
+            try {
+                const response = await fetch('./排班資料.json');
+                if (response.ok) {
+                    const jsonData = await response.json();
+                    if (jsonData && Object.keys(jsonData).length > 0) {
+                        console.log('Loading data from JSON file');
+                        return jsonData;
+                    }
+                }
+                console.warn('JSON file is empty or invalid, using default data');
+                return null;
+            } catch (error) {
+                console.warn('Error loading JSON data, using default:', error);
+                return null;
+            }
+        }
+
+        // --- Manual JSON File Loading ---
+        function loadJSONFile() {
+            return new Promise((resolve) => {
+                const input = document.getElementById('json-file-input');
+                input.onchange = (event) => {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            try {
+                                const jsonData = JSON.parse(e.target.result);
+                                resolve(jsonData);
+                            } catch (error) {
+                                console.error('Invalid JSON file:', error);
+                                showToast('JSON檔案格式錯誤', 'error');
+                                resolve(null);
+                            }
+                        };
+                        reader.readAsText(file);
+                    } else {
+                        resolve(null);
+                    }
+                };
+                input.click();
+            });
+        }
+
+        // --- Initial Data Hydration ---
+                async function getInitialData() {
+            // Try to load data from JSON first
+            const jsonData = await loadJSONData();
+            if (jsonData) {
+                return jsonData;
+            }
+            
+            // This function provides the default structure for a new user.
+            const staffData = {
+                'EAT-101': { id: 'EAT-101', name: '李主廚', avatar: `https://i.pravatar.cc/150?u=EAT-101`, expectedWeeklyHours: 40,
+                    skills: { '主管': { type: 'secondary', rating: 4 }, '日料': { type: 'primary', rating: 5 } }, 
+                    preferences: {} 
+                },
+                'EAT-102': { id: 'EAT-102', name: '吳師傅', avatar: `https://i.pravatar.cc/150?u=EAT-102`, expectedWeeklyHours: 40,
+                    skills: { '日料': { type: 'primary', rating: 4 } }, 
+                    preferences: {} 
+                },
+                'EAT-103': { id: 'EAT-103', name: '錢師傅', avatar: `https://i.pravatar.cc/150?u=EAT-103`, expectedWeeklyHours: 25,
+                    skills: { '日料': { type: 'primary', rating: 3 }, '西點': { type: 'secondary', rating: 3 } }, 
+                    preferences: {} 
+                },
+                'EAT-201': { id: 'EAT-201', name: '孫主廚', avatar: `https://i.pravatar.cc/150?u=EAT-201`, expectedWeeklyHours: 40,
+                    skills: { '主管': { type: 'secondary', rating: 5 }, '西點': { type: 'primary', rating: 5 } }, 
+                    preferences: {} 
+                },
+                'EAT-202': { id: 'EAT-202', name: '侯組長', avatar: `https://i.pravatar.cc/150?u=EAT-202`, expectedWeeklyHours: 30,
+                    skills: { '西點': { type: 'primary', rating: 4 } }, 
+                    preferences: {} 
+                },
+                'EAT-301': { id: 'EAT-301', name: '杜主廚', avatar: `https://i.pravatar.cc/150?u=EAT-301`, expectedWeeklyHours: 20,
+                    skills: { '中炒': { type: 'primary', rating: 2 } }, 
+                    preferences: {} 
+                },
+            };
+            const unitMetadata = {
+                kitchen: {
+                    name: '內場',
+                    activeTemplate: 'kitchen_weekday',
+                    templates: [
+                        { id: 'kitchen_stocktake', name: '盤點日', type: 'date', days: [], dates: ['2025-07-31'] },
+                        { id: 'kitchen_weekend', name: '假日尖峰', type: 'week', days: [0, 6], dates: [] },
+                        { id: 'kitchen_weekday', name: '平日需求', type: 'week', days: [1,2,3,4,5], dates: [] }
+                    ]
+                },
+                front_house: {
+                    name: '外場',
+                    activeTemplate: 'fh_default',
+                    templates: [
+                        { id: 'fh_default', name: '標準人力', type: 'week', days: [0,1,2,3,4,5,6], dates: [] }
+                    ]
+                }
+            };
+            const allSchedules = {
+                'kitchen_weekday': {
+                    roles: [ { id: 'role_1', name: '主管' }, { id: 'role_2', name: '日料' }, { id: 'role_3', name: '西點' }, { id: 'role_4', name: '中炒' } ],
+                    timeslots: ["10:00-11:00", "11:00-12:00", "12:00-13:00", "17:00-18:00", "18:00-19:00", "19:00-20:00"],
+                    headcount: { 'role_1': { "11:00-12:00": 1, "12:00-13:00": 1, "18:00-19:00": 1 }, 'role_2': { "10:00-11:00": 1, "11:00-12:00": 2, "12:00-13:00": 2, "17:00-18:00": 2, "18:00-19:00": 2, "19:00-20:00": 1 }, 'role_3': { "10:00-11:00": 1, "11:00-12:00": 1, "17:00-18:00": 1, "18:00-19:00": 1 }, 'role_4': { "11:00-12:00": 1, "18:00-19:00": 1 } },
+                    strategicTiers: { "18:00-19:00": { tier: 'SSS', formula: { minStars: 5, minCount: 1, avgStars: 4, maxNewbies: 1 } }, "12:00-13:00": { tier: 'A', formula: { minStars: 4, minCount: 1, avgStars: 3.5, maxNewbies: 1 } } }
+                },
+                'kitchen_weekend': {
+                     roles: [ { id: 'role_k_weekend_1', name: '主管' }, { id: 'role_k_weekend_2', name: '日料' } ],
+                     timeslots: ['11:00-12:00', '12:00-13:00', '13:00-14:00', '17:00-18:00', '18:00-19:00'],
+                     headcount: { 'role_k_weekend_1': { '12:00-13:00': 1, '18:00-19:00': 1 }, 'role_k_weekend_2': { '11:00-12:00': 3, '12:00-13:00': 4, '13:00-14:00': 4, '17:00-18:00': 3, '18:00-19:00': 3 } },
+                     strategicTiers: {}
+                },
+                'kitchen_stocktake': { roles: [], timeslots: [], headcount: {}, strategicTiers: {} },
+                'fh_default': {
+                    roles: [ { id: 'role_fh_1', name: '經理級' }, { id: 'role_fh_2', name: '服務員' } ],
+                    timeslots: ['11:00-12:00', '12:00-13:00', '13:00-14:00', '17:00-18:00', '18:00-19:00', '19:00-20:00'],
+                    headcount: { 'role_fh_1': { '12:00-13:00': 1, '18:00-19:00': 1 }, 'role_fh_2': { '11:00-12:00': 2, '12:00-13:00': 3, '13:00-14:00': 3, '17:00-18:00': 3, '18:00-19:00': 3, '19:00-20:00': 2 } },
+                    strategicTiers: {}
+                }
+            };
+            return { staffData, unitMetadata, allSchedules };
+        }
+        
+        // --- Local JSON Functions ---
+        async function saveDataToJSON() {
+            const data = {
+                staffData: appState.staffData,
+                unitMetadata: appState.unitMetadata,
+                allSchedules: appState.allSchedules,
+            };
+            
+            try {
+                // Create download link for JSON file
+                const dataStr = JSON.stringify(data, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = '排班資料.json';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                console.log('Data exported to JSON file');
+                showToast('資料已保存並下載到本地');
+            } catch (error) {
+                console.error("Error saving data to JSON:", error);
+                showToast('保存失敗，請重試', 'error');
+            }
+        }
+
+        async function loadDataFromJSON() {
+            // Try to load data from JSON first
+            const jsonData = await loadJSONData();
+            if (jsonData) {
+                appState.staffData = jsonData.staffData || {};
+                appState.unitMetadata = jsonData.unitMetadata || {};
+                appState.allSchedules = jsonData.allSchedules || {};
+                showToast('JSON資料載入成功');
+            } else {
+                // Create initial data if no JSON data available
+                const initialData = await getInitialData();
+                appState.staffData = initialData.staffData;
+                appState.unitMetadata = initialData.unitMetadata;
+                appState.allSchedules = initialData.allSchedules;
+                showToast('使用預設資料，可點選"載入JSON檔案"導入自定義資料', 'info');
+            }
+            appState.currentUnitId = Object.keys(appState.unitMetadata)[0] || 'kitchen';
+            appState.currentTemplateId = appState.unitMetadata[appState.currentUnitId]?.activeTemplate;
+        }
+
+
+        // --- Toast Notification ---
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            
+            toastMessage.textContent = message;
+            let bgColor = 'bg-green-500';
+            if (type === 'error') bgColor = 'bg-red-500';
+            else if (type === 'info') bgColor = 'bg-blue-500';
+            
+            toast.className = `fixed top-20 right-5 px-6 py-3 rounded-lg shadow-lg z-[1100] ${bgColor} text-white`;
+            toast.classList.remove('hidden');
+            
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, type === 'info' ? 5000 : 3000);
+        }
+
+        // --- Core App Logic ---
+        async function init() {
+            await loadDataFromJSON();
+            renderPage();
+            bindAppEvents();
+        }
+
+        function renderPage() {
+            const page = appState.currentPage;
+            if (page === 'employee_management') renderEmployeeManagementPage(pageContainer);
+            else if (page === 'demand') renderDemandPlanningPage(pageContainer);
+            else if (page === 'ai_strategy') renderAiStrategyPage(pageContainer); // [v7.0 NEW]
+            updateNavLinks();
+        }
+
+        function updateNavLinks() {
+            document.querySelectorAll('#main-nav .nav-link').forEach(link => {
+                link.classList.toggle('bg-blue-500', link.dataset.page === appState.currentPage);
+                link.classList.toggle('text-white', link.dataset.page === appState.currentPage);
+            });
+        }
+
+        function bindAppEvents() {
+            document.getElementById('main-nav').addEventListener('click', (e) => {
+                const link = e.target.closest('.nav-link');
+                if (link && link.dataset.page !== appState.currentPage) {
+                    e.preventDefault();
+                    appState.currentPage = link.dataset.page;
+                    renderPage();
+                }
+            });
+
+            // Load JSON file button
+            document.getElementById('load-json-btn').addEventListener('click', async () => {
+                const jsonData = await loadJSONFile();
+                if (jsonData) {
+                    appState.staffData = jsonData.staffData || {};
+                    appState.unitMetadata = jsonData.unitMetadata || {};
+                    appState.allSchedules = jsonData.allSchedules || {};
+                    appState.currentUnitId = Object.keys(appState.unitMetadata)[0] || 'kitchen';
+                    appState.currentTemplateId = appState.unitMetadata[appState.currentUnitId]?.activeTemplate;
+                    renderPage();
+                    showToast('JSON檔案載入成功！');
+                }
+            });
+
+            // Export JSON file button
+            document.getElementById('export-json-btn').addEventListener('click', () => {
+                saveDataToJSON();
+            });
+        }
+        
+        // --- Employee Management Page ---
+                function renderEmployeeManagementPage(container) {
+            const employees = Object.values(appState.staffData);
+            const { selectedEmployees, copiedPreference } = appState.uiState;
+            const allSelected = selectedEmployees.size > 0 && selectedEmployees.size === employees.length;
+            const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+
+            const renderSkillTags = (skills) => {
+                if (!skills) return '';
+                return Object.entries(skills).map(([skillName, skillData]) => `
+                    <span class="skill-tag ${skillData.type}">
+                        ${skillName}
+                        <span class="star">${'★'.repeat(skillData.rating)}${'☆'.repeat(5 - skillData.rating)}</span>
+                    </span>
+                `).join('');
+            };
+
+            const renderCellContent = (empId, dayIndex) => {
+                const prefs = appState.staffData[empId]?.preferences?.[dayIndex];
+                if (prefs === 'unavailable') {
+                    return '<span class="cell-unavailable">無法排班</span>';
+                }
+                if (Array.isArray(prefs) && prefs.length > 0) {
+                    return prefs.map(slot => `<div class="cell-time-slot ${slot.type}">${slot.start}-${slot.end}</div>`).join('');
+                }
+                return '<span class="text-gray-400 text-xs">點擊設定</span>';
+            };
+
+            container.innerHTML = `
+                <main class="p-6 bg-gray-100 h-full flex flex-col">
+                    <div class="flex-shrink-0 mb-6 flex justify-between items-center">
+                        <h1 class="text-2xl font-bold font-noto text-gray-800">員工管理與偏好設定</h1>
+                        <div class="flex items-center space-x-3">
+                            <button id="download-template-btn" class="text-sm font-semibold text-blue-600 hover:text-blue-800">下載範本</button>
+                            <button id="import-prefs-btn" class="text-sm font-semibold text-green-600 hover:text-green-800">匯入設定</button>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg border flex-1 overflow-auto">
+                        <div class="mb-4 flex justify-between items-center">
+                            <p class="text-sm text-gray-600">已選取 ${selectedEmployees.size} 位員工</p>
+                            <div>
+                                <button id="copy-prefs-btn" class="text-sm font-semibold text-blue-600 hover:text-blue-800" ${selectedEmployees.size !== 1 ? 'disabled' : ''}>複製整週設定</button>
+                                <button id="paste-prefs-btn" class="text-sm font-semibold text-green-600 hover:text-green-800 ml-4" ${!copiedPreference || selectedEmployees.size === 0 ? 'disabled' : ''}>貼上整週設定</button>
+                            </div>
+                        </div>
+                        <table class="w-full batch-edit-table" style="min-width: 1400px;">
+                            <thead>
+                                <tr>
+                                    <th class="w-[18%]"><input type="checkbox" id="select-all-employees" ${allSelected ? 'checked' : ''}> 員工</th>
+                                    <th class="w-[22%]">技能與績效</th>
+                                    <th class="w-[10%]">預期工時/週</th>
+                                    ${weekDays.map(day => `<th class="w-[7.14%]">${day}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${employees.map(emp => `
+                                    <tr>
+                                        <td>
+                                            <div class="flex items-center space-x-3">
+                                               <input type="checkbox" class="employee-select-checkbox" data-employee-id="${emp.id}" ${selectedEmployees.has(emp.id) ? 'checked' : ''}>
+                                               <img src="${emp.avatar}" alt="${emp.name}" class="w-10 h-10 rounded-full">
+                                               <div><p class="font-bold text-gray-800">${emp.name}</p></div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="flex items-center gap-2 flex-wrap" data-employee-id="${emp.id}">
+                                                ${renderSkillTags(emp.skills)}
+                                                <button class="edit-skills-btn text-xs text-blue-600 font-semibold ml-1" data-employee-id="${emp.id}">編輯</button>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <input 
+                                                type="number" 
+                                                class="expected-hours-input w-20 text-center p-1 border rounded-md" 
+                                                value="${emp.expectedWeeklyHours || ''}" 
+                                                placeholder="0"
+                                                min="0"
+                                                data-employee-id="${emp.id}"
+                                            >
+                                        </td>
+                                        ${weekDays.map((_, dayIndex) => `
+                                            <td>
+                                                <div class="batch-edit-cell" data-employee-id="${emp.id}" data-day-index="${dayIndex}">
+                                                    ${renderCellContent(emp.id, dayIndex)}
+                                                </div>
+                                            </td>
+                                        `).join('')}
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </main>
+                <input type="file" id="import-file-input" class="hidden" accept=".csv">
+            `;
+            bindEmployeeManagementEvents();
+        }
+
+                function bindEmployeeManagementEvents() {
+            const container = document.getElementById('page-container');
+            const { selectedEmployees } = appState.uiState;
+            
+            // --- Event Delegation for the whole container ---
+            container.addEventListener('change', e => {
+                const target = e.target;
+
+                if (target.id === 'select-all-employees') {
+                    const isChecked = target.checked;
+                    const employees = Object.values(appState.staffData);
+                    if (isChecked) {
+                        employees.forEach(emp => selectedEmployees.add(emp.id));
+                    } else {
+                        selectedEmployees.clear();
+                    }
+                    renderEmployeeManagementPage(pageContainer);
+                    return; // Stop further execution
+                }
+
+                if (target.classList.contains('employee-select-checkbox')) {
+                    const empId = target.dataset.employeeId;
+                    if (target.checked) selectedEmployees.add(empId);
+                    else selectedEmployees.delete(empId);
+                    renderEmployeeManagementPage(pageContainer);
+                    return;
+                }
+
+                // --- NEW: Handle expected hours input change ---
+                if (target.classList.contains('expected-hours-input')) {
+                    const empId = target.dataset.employeeId;
+                    const hours = parseInt(target.value, 10) || 0;
+                    if (appState.staffData[empId]) {
+                        appState.staffData[empId].expectedWeeklyHours = hours;
+                        // No re-render needed for input change, data is updated in the state.
+                        // It will be saved with other actions.
+                    }
+                }
+            });
+
+            container.addEventListener('click', async e => {
+                const target = e.target;
+
+                const cell = target.closest('.batch-edit-cell');
+                if (cell) {
+                    const empId = cell.dataset.employeeId;
+                    renderPreferenceModal(appState.staffData[empId]);
+                    return;
+                }
+                
+                if (target.closest('#copy-prefs-btn')) {
+                    if (selectedEmployees.size !== 1) return;
+                    const empId = selectedEmployees.values().next().value;
+                    appState.uiState.copiedPreference = appState.staffData[empId].preferences || {};
+                    alert(`${appState.staffData[empId].name} 的整週設定已複製`);
+                    renderEmployeeManagementPage(pageContainer);
+                    return;
+                }
+
+                if (target.closest('#paste-prefs-btn')) {
+                    const { copiedPreference } = appState.uiState;
+                    if (!copiedPreference || selectedEmployees.size === 0) return;
+                    selectedEmployees.forEach(empId => {
+                        appState.staffData[empId].preferences = JSON.parse(JSON.stringify(copiedPreference));
+                    });
+                    await saveDataToJSON();
+                    alert(`設定已成功貼上至 ${selectedEmployees.size} 位員工`);
+                    appState.uiState.copiedPreference = null;
+                    renderEmployeeManagementPage(pageContainer);
+                    return;
+                }
+            
+                const editSkillsBtn = target.closest('.edit-skills-btn');
+                if (editSkillsBtn) {
+                    const empId = editSkillsBtn.dataset.employeeId;
+                    renderSkillEditModal(appState.staffData[empId]);
+                    return;
+                }
+                
+                if (target.closest('#download-template-btn')) {
+                    handleDownloadTemplate();
+                    return;
+                }
+
+                if (target.closest('#import-prefs-btn')) {
+                    document.getElementById('import-file-input').click();
+                    return;
+                }
+            });
+            
+            document.getElementById('import-file-input').onchange = handleImportPreferences;
+        }
+
+        // --- Demand Planning Page ---
+        function renderDemandPlanningPage(container) {
+            const { currentUnitId, unitMetadata, allSchedules, currentTemplateId } = appState;
+            const currentSchedule = allSchedules[currentTemplateId] || { roles: [], timeslots: [], headcount: {}, strategicTiers: {} };
+            const { roles, timeslots, headcount, strategicTiers } = currentSchedule;
+            const sortedTimeslots = timeslots.slice().sort((a, b) => a.localeCompare(b));
+
+            const getQualifiedStaffCount = (roleName) => {
+                return Object.values(appState.staffData).filter(emp => emp.skills && emp.skills[roleName]).length;
+            };
+
+            container.innerHTML = `
+                <main class="p-6 bg-gray-100 h-full flex flex-col">
+                    <header class="flex-shrink-0 mb-6 flex flex-wrap items-center justify-between gap-4">
+                         <div class="flex items-center gap-4 flex-wrap">
+                            <h1 class="text-2xl font-bold text-slate-800">人力需求規劃</h1>
+                            <select id="unit-select" class="h-10 px-3 pr-8 bg-white border border-slate-300 rounded-md shadow-sm">
+                                ${Object.entries(unitMetadata).map(([id, meta]) => `<option value="${id}" ${id === currentUnitId ? 'selected' : ''}>${meta.name}</option>`).join('')}
+                            </select>
+                            <div class="flex items-center gap-2">
+                                <label class="text-sm font-medium text-slate-600">目前範本:</label>
+                                <select id="template-select" class="h-10 px-3 pr-8 bg-white border border-slate-300 rounded-md">
+                                    ${(unitMetadata[currentUnitId]?.templates || []).map(template => `<option value="${template.id}" ${template.id === currentTemplateId ? 'selected' : ''}>${template.name}</option>`).join('')}
+                                </select>
+                                <button id="manage-templates-btn" class="p-2 rounded-md hover:bg-slate-100 transition" title="管理範本">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-600"><path d="M12.22 2h-4.12a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.38"/><path d="M16.5 2.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                         <div class="flex items-center gap-3">
+                            <button id="save-demand-btn" class="px-4 py-2 bg-orange-500 text-white font-semibold rounded-lg shadow-md hover:bg-orange-600">儲存設定</button>
+                        </div>
+                    </header>
+                    <div class="bg-white p-4 rounded-lg border flex-1 overflow-auto">
+                        <table class="w-full demand-table" style="min-width: 1200px;">
+                            <thead>
+                                <tr>
+                                    <th class="text-left sticky left-0 z-10 bg-gray-50 p-3 w-[250px]">群組 (技能)</th>
+                                    ${sortedTimeslots.map(slot => `
+                                        <th class="timeslot-header group" data-timeslot="${slot}">
+                                            ${slot}
+                                            <button data-timeslot-to-delete="${slot}" class="delete-timeslot-btn text-slate-400 hover:text-red-500 ml-1 opacity-0 group-hover:opacity-100" title="刪除此時段">×</button>
+                                            ${strategicTiers[slot] ? `<span class="tier-indicator tier-${strategicTiers[slot].tier}">${strategicTiers[slot].tier}</span>` : ''}
+                                        </th>
+                                    `).join('')}
+                                    <th class="p-3">符合員工</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${roles.map(role => `
+                                    <tr key="${role.id}" class="role-row">
+                                        <td class="text-left font-bold sticky left-0 z-10 bg-white p-3">
+                                            <div class="flex items-center justify-between">
+                                                <input type="text" class="role-name-input font-bold p-1 rounded border border-transparent hover:border-slate-300 focus:border-blue-500 bg-transparent w-3/4" value="${role.name}" data-role-id="${role.id}" />
+                                                <div class="flex items-center gap-1 opacity-0 role-actions">
+                                                    <button class="copy-role-btn p-1 rounded hover:bg-gray-200" title="複製群組" data-role-id="${role.id}">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                                    </button>
+                                                    <button class="delete-role-btn p-1 rounded hover:bg-gray-200" title="刪除群組" data-role-id="${role.id}">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        ${sortedTimeslots.map(slot => `
+                                            <td key="${slot}"><input type="number" min="0" class="w-16 text-center p-1 border rounded" value="${headcount[role.id]?.[slot] || 0}" data-role-id="${role.id}" data-timeslot="${slot}"></td>
+                                        `).join('')}
+                                        <td class="p-3 text-sm">
+                                            ${getQualifiedStaffCount(role.name)} 人
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        <div class="mt-4 flex flex-col sm:flex-row gap-4">
+                            <button id="add-role-btn" class="px-4 py-2 bg-slate-100 text-slate-800 font-medium rounded-md hover:bg-slate-200">+ 新增群組</button>
+                            <button id="add-timeslot-btn" class="px-4 py-2 bg-slate-100 text-slate-800 font-medium rounded-md hover:bg-slate-200">+ 新增時段</button>
+                        </div>
+                    </div>
+                    <div class="max-w-7xl mx-auto mt-8">
+                        <div class="bg-slate-100 rounded-xl shadow-inner p-4">
+                            <h3 class="text-lg font-bold text-slate-700">開發者筆記：使用者故事 (User Stories)</h3>
+                            <p class="text-sm text-slate-600 mt-2">此區塊說明「多範本系統」如何解決實際管理問題。例如，您可以建立「假日尖峰」和特殊的「年中慶」範本，並透過拖曳排序，確保「年中慶」的規則在假日當天被優先採用。</p>
+                        </div>
+                    </div>
+                </main>
+            `;
+             // Add a bit of CSS to show buttons on hover
+            const style = document.createElement('style');
+            style.innerHTML = `
+                .role-row:hover .role-actions { opacity: 1; }
+                .timeslot-header:hover .delete-timeslot-btn { opacity: 1; }
+            `;
+            // Avoid adding duplicate styles
+            if (!document.head.querySelector('#dynamic-demand-styles')) {
+                style.id = 'dynamic-demand-styles';
+                document.head.appendChild(style);
+            }
+            bindDemandPlanningEvents();
+        }
+
+        function bindDemandPlanningEvents() {
+            // --- Top-level controls ---
+            document.getElementById('unit-select').onchange = (e) => {
+                appState.currentUnitId = e.target.value;
+                appState.currentTemplateId = appState.unitMetadata[appState.currentUnitId].activeTemplate;
+                renderDemandPlanningPage(pageContainer);
+            };
+            document.getElementById('template-select').onchange = (e) => {
+                appState.currentTemplateId = e.target.value;
+                appState.unitMetadata[appState.currentUnitId].activeTemplate = e.target.value;
+                renderDemandPlanningPage(pageContainer);
+            };
+            document.getElementById('manage-templates-btn').onclick = () => renderTemplatesModal();
+            document.getElementById('save-demand-btn').onclick = async () => {
+                await saveDataToJSON();
+                alert('人力需求已儲存！');
+            };
+            document.getElementById('add-timeslot-btn').onclick = () => renderActionModal({ type: 'add-timeslot' });
+            
+            // --- Add Role Button ---
+            document.getElementById('add-role-btn').onclick = () => {
+                renderActionModal({ type: 'add-role' });
+            };
+
+            const table = document.querySelector('.demand-table');
+            if (!table) return;
+
+            // --- Event Delegation for Table Clicks ---
+            table.addEventListener('click', e => {
+                const target = e.target;
+                const currentSchedule = appState.allSchedules[appState.currentTemplateId];
+
+                // Click on timeslot header for tier modal
+                const timeslotHeader = target.closest('.timeslot-header');
+                if (timeslotHeader && !target.closest('.delete-timeslot-btn')) {
+                    const timeslot = timeslotHeader.dataset.timeslot;
+                    renderTierModal(timeslot);
+                    return;
+                }
+
+                // Delete Timeslot button
+                const deleteTimeslotBtn = target.closest('.delete-timeslot-btn');
+                if (deleteTimeslotBtn) {
+                     const slotToDelete = deleteTimeslotBtn.dataset.timeslotToDelete;
+                     if (confirm(`確定要刪除時段 "${slotToDelete}" 嗎？`)) {
+                        const index = currentSchedule.timeslots.indexOf(slotToDelete);
+                        if (index > -1) currentSchedule.timeslots.splice(index, 1);
+                        Object.keys(currentSchedule.headcount).forEach(roleId => {
+                            delete currentSchedule.headcount[roleId][slotToDelete];
+                        });
+                        renderDemandPlanningPage(pageContainer);
+                     }
+                     return;
+                }
+                
+                // Copy Role button
+                const copyBtn = target.closest('.copy-role-btn');
+                if (copyBtn) {
+                    const roleIdToCopy = copyBtn.dataset.roleId;
+                    const originalRoleIndex = currentSchedule.roles.findIndex(r => r.id === roleIdToCopy);
+                    if (originalRoleIndex === -1) return;
+                    
+                    const originalRole = currentSchedule.roles[originalRoleIndex];
+                    const newRoleId = `role_${Date.now()}`;
+                    const newRole = {
+                        ...JSON.parse(JSON.stringify(originalRole)),
+                        id: newRoleId,
+                        name: `${originalRole.name} (複本)`
+                    };
+
+                    currentSchedule.roles.splice(originalRoleIndex + 1, 0, newRole);
+                    currentSchedule.headcount[newRoleId] = { ...currentSchedule.headcount[roleIdToCopy] };
+                    renderDemandPlanningPage(pageContainer);
+                    return;
+                }
+
+                // Delete Role button
+                const deleteBtn = target.closest('.delete-role-btn');
+                if (deleteBtn) {
+                    const roleIdToDelete = deleteBtn.dataset.roleId;
+                    const roleIndex = currentSchedule.roles.findIndex(r => r.id === roleIdToDelete);
+                    if (roleIndex > -1 && confirm(`確定要刪除群組 "${currentSchedule.roles[roleIndex].name}" 嗎？`)) {
+                        currentSchedule.roles.splice(roleIndex, 1);
+                        delete currentSchedule.headcount[roleIdToDelete];
+                        renderDemandPlanningPage(pageContainer);
+                    }
+                    return;
+                }
+            });
+            
+            // --- Event Delegation for Table Inputs/Changes ---
+            table.addEventListener('change', e => {
+                const target = e.target;
+                const currentSchedule = appState.allSchedules[appState.currentTemplateId];
+
+                // Headcount input changes
+                if(target.matches('input[type="number"]')) {
+                    const { roleId, timeslot } = target.dataset;
+                    const value = parseInt(target.value, 10) || 0;
+                    if (!currentSchedule.headcount[roleId]) {
+                        currentSchedule.headcount[roleId] = {};
+                    }
+                    currentSchedule.headcount[roleId][timeslot] = value;
+                }
+                
+                // Role name input changes
+                if(target.matches('.role-name-input')) {
+                    const roleId = target.dataset.roleId;
+                    const role = currentSchedule.roles.find(r => r.id === roleId);
+                    if (role) {
+                        role.name = target.value;
+                    }
+                }
+            });
+        }
+        
+        // --- AI Strategy Page ---
+        function renderAiStrategyPage(container) {
+            container.innerHTML = `
+                <main class="p-6 bg-gray-100 h-full flex flex-col">
+                    <div class="flex-shrink-0 mb-6">
+                        <h1 class="text-2xl font-bold font-noto text-gray-800">AI 排班策略文檔</h1>
+                        <p class="text-sm text-gray-500 font-noto mt-1">本文件旨在說明系統內建的排班策略邏輯，並為 AI 工程師提供擴充新策略的開發指引。</p>
+                    </div>
+                    <div class="flex-1 overflow-auto space-y-8">
+                        
+                        <!-- Strategy 1 -->
+                        <div class="bg-white p-6 rounded-lg border">
+                            <h2 class="text-xl font-bold font-noto text-blue-600">1. 人力最佳化策略 (Workforce Optimization)</h2>
+                            <p class="mt-2 text-sm text-gray-600">此為基礎策略，目標在於滿足最基本的人力需求，確保店點能夠正常運營。</p>
+                            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                                <div>
+                                    <h3 class="font-semibold text-gray-800 border-b pb-2">輸入參數 (P0)</h3>
+                                    <ul class="mt-2 list-disc list-inside space-y-1 text-gray-700">
+                                        <li><b>人力需求規劃：</b>各群組在各時段所需的人數。</li>
+                                        <li><b>員工技能：</b>員工所具備的技能（對應群組）。</li>
+                                        <li><b>員工偏好時段：</b>員工的「優先」、「可配合」與「禁排」時段。</li>
+                                        <li><b>預期工時：</b>員工期望的每週工作時數。</li>
+                                    </ul>
+                                    <h3 class="font-semibold text-gray-800 border-b pb-2 mt-4">未來規劃 (P1)</h3>
+                                     <ul class="mt-2 list-disc list-inside space-y-1 text-gray-700">
+                                        <li>將「員工技能」與「績效」完全整合至員工管理層級，與人力需求規劃脫鉤。</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800 border-b pb-2">執行邏輯 (P0)</h3>
+                                    <ol class="mt-2 list-decimal list-inside space-y-1 text-gray-700">
+                                        <li><b>排除禁排：</b>過濾掉所有在「禁排時段」或「整日無法排班」的員工。</li>
+                                        <li><b>技能篩選：</b>針對每一個時段的每一個群組，找出具備該技能的員工。</li>
+                                        <li><b>偏好排序：</b>優先選擇「優先時段」符合的員工，其次是「可配合時段」。</li>
+                                        <li><b>工時平衡：</b>在同等偏好條件下，優先選擇距離「預期工時」最遠的員工，以求工時分配公平。</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Strategy 2 -->
+                        <div class="bg-white p-6 rounded-lg border">
+                            <h2 class="text-xl font-bold font-noto text-green-600">2. 成本最低策略 (Lowest Cost)</h2>
+                            <p class="mt-2 text-sm text-gray-600">此策略建立在「人力最佳化」之上，加入成本考量，旨在滿足人力需求的同時，盡可能降低薪資成本。</p>
+                            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                                <div>
+                                    <h3 class="font-semibold text-gray-800 border-b pb-2">新增輸入參數 (P0)</h3>
+                                    <ul class="mt-2 list-disc list-inside space-y-1 text-gray-700">
+                                        <li><b>員工薪資類型：</b>月薪 vs. 時薪。</li>
+                                        <li><b>員工薪資數值：</b>月薪金額或每小時工資。</li>
+                                        <li><b>加班費倍率與時數基準：</b>用於估算加班成本。</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800 border-b pb-2">執行邏輯 (P0)</h3>
+                                    <ol class="mt-2 list-decimal list-inside space-y-1 text-gray-700">
+                                        <li>執行「人力最佳化」策略的步驟 1-3，找出所有「合格且有意願」的候選人。</li>
+                                        <li><b>計算有效成本：</b>為每位候選人計算排入此班的「預估成本」（含可能產生的加班費）。</li>
+                                        <li><b>成本排序：</b>將候選人依照「預估成本」由低至高排序。</li>
+                                        <li><b>依成本指派：</b>從成本最低的候選人開始指派，直到滿足人力需求。</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Strategy 3 -->
+                        <div class="bg-white p-6 rounded-lg border">
+                            <h2 class="text-xl font-bold font-noto text-purple-600">3. 人力績效策略 (Performance & Strategy)</h2>
+                            <p class="mt-2 text-sm text-gray-600">最進階的策略，充分利用所有維度的數據，旨在達成最佳的營運表現與顧客體驗，是精細化管理的最佳選擇。</p>
+                             <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                                <div>
+                                    <h3 class="font-semibold text-gray-800 border-b pb-2">新增輸入參數 (P1)</h3>
+                                    <ul class="mt-2 list-disc list-inside space-y-1 text-gray-700">
+                                        <li><b>技能績效指數：</b>員工在特定技能上的 1-5 星評級。</li>
+                                        <li><b>時段戰略等級：</b>SSS, A, B, C 級。</li>
+                                        <li><b>戰力配置規則：</b>針對戰略等級設定的最低戰力、平均戰力、新人比例等。</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800 border-b pb-2">執行邏輯 (P1)</h3>
+                                    <ol class="mt-2 list-decimal list-inside space-y-1 text-gray-700">
+                                        <li><b>戰略篩選：</b>首先，根據時段的「戰略等級」與「戰力配置規則」，篩選出符合績效門檻的「合格候選人」。</li>
+                                        <li><b>偏好過濾：</b>從合格候選人中，再根據員工的偏好時段進行過濾與排序（優先 > 可配合）。</li>
+                                        <li><b>成本效益排序 (CP值)：</b>計算剩餘人選的「績效成本比」，並由高至低排序。</li>
+                                        <li><b>智慧指派：</b>依序指派（優先填滿月薪工時，再依 CP 值遞補時薪），直到滿足人力需求。</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Developer Guide -->
+                        <div class="bg-gray-800 text-white p-6 rounded-lg">
+                            <h2 class="text-xl font-bold font-noto">AI 工程師開發指引</h2>
+                            <p class="mt-2 text-sm text-gray-300">為確保系統的可擴充性，未來在開發新排班策略時，請遵循以下流程：</p>
+                            <ol class="mt-4 list-decimal list-inside space-y-2 text-gray-200">
+                                <li><b>需求定義：</b>與產品經理或店長訪談，明確新策略的商業目標（例如：目標是提升員工滿意度？還是訓練新人？）。</li>
+                                <li><b>參數識別：</b>分析要達成此目標，需要哪些現有數據，或需要請前端新增哪些新的輸入參數（Key Indicators）。</li>
+                                <li><b>邏輯建模：</b>將決策過程繪製成清晰的流程圖，定義各參數的權重與決策的先後順序。</li>
+                                <li><b>演算法實作：</b>將模型轉換為程式碼。建立一個獨立的策略函式，使其易於被主排班引擎調用。</li>
+                                <li><b>文檔撰寫：</b>在此頁面新增一個區塊，依照現有格式，詳細說明新策略的目標、參數與執行邏輯，以利團隊維護。</li>
+                            </ol>
+                        </div>
+
+                    </div>
+                </main>
+            `;
+        }
+
+
+        // --- Modals ---
+        function renderPreferenceModal(employee, currentPrefs, selectedPrefType = 'priority') {
+            const modalContainer = document.getElementById('modal-container');
+            const modalContent = document.getElementById('modal-content');
+            const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+            
+            if (!currentPrefs) {
+                currentPrefs = JSON.parse(JSON.stringify(employee.preferences || {}));
+            }
+
+            const renderDayTimeline = (dayIndex) => {
+                const dayPref = currentPrefs[dayIndex];
+                const timelineSlotsHTML = (Array.isArray(dayPref) && dayPref.length > 0) 
+                    ? dayPref.map((slot, slotIndex) => {
+                        const startMins = parseInt(slot.start.split(':')[0]) * 60 + parseInt(slot.start.split(':')[1]);
+                        const endMins = parseInt(slot.end.split(':')[0]) * 60 + parseInt(slot.end.split(':')[1]);
+                        const startPercent = startMins / 1440 * 100;
+                        const widthPercent = (endMins - startMins) / 1440 * 100;
+                        return `<div class="timeline-slot ${slot.type}" style="left: ${startPercent}%; width: ${widthPercent}%;" data-slot-index="${slotIndex}"><div class="slot-tooltip">${slot.start} - ${slot.end}</div></div>`;
+                    }).join('') 
+                    : '';
+                return `<div class="timeline-container ${dayPref === 'unavailable' ? 'bg-gray-200 cursor-not-allowed' : ''}">
+                            <div class="timeline-grid">${Array.from({length: 24}).map(() => `<div class="timeline-hour-marker"></div>`).join('')}</div>
+                            ${timelineSlotsHTML}
+                        </div>`;
+            };
+            
+            const rulerHTML = `<div class="timeline-ruler ml-auto w-5/6">${['00', '03', '06', '09', '12', '15', '18', '21'].map(h => `<span>${h}</span>`).join('')}</div>`;
+
+            modalContent.innerHTML = `
+                <div class="p-6 border-b flex justify-between items-center">
+                    <h2 class="text-xl font-bold font-noto">編輯排班偏好 - ${employee.name}</h2>
+                    <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                </div>
+                <div class="p-4 bg-gray-100 border-b flex flex-wrap items-center gap-4">
+                    <div class="flex items-center gap-4">
+                        <p class="text-sm font-semibold">偏好:</p>
+                        <div class="flex items-center gap-4" id="pref-type-selector">
+                            <label><input type="radio" name="prefType" value="priority" ${selectedPrefType === 'priority' ? 'checked' : ''}> <span class="px-2 py-1 rounded bg-green-100 text-green-800 text-sm">🟢 優先時段</span></label>
+                            <label><input type="radio" name="prefType" value="available" ${selectedPrefType === 'available' ? 'checked' : ''}> <span class="px-2 py-1 rounded bg-blue-100 text-blue-800 text-sm">🔵 可配合時段</span></label>
+                            <label><input type="radio" name="prefType" value="forbidden" ${selectedPrefType === 'forbidden' ? 'checked' : ''}> <span class="px-2 py-1 rounded bg-red-100 text-red-800 text-sm">? 禁排時段</span></label>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-auto">
+                        <span class="text-sm font-semibold text-gray-700">快捷操作:</span>
+                        <input type="time" id="batch-start-time" class="w-24 p-1 border-gray-300 rounded-md" value="10:00">
+                        <span class="text-gray-500">-</span>
+                        <input type="time" id="batch-end-time" class="w-24 p-1 border-gray-300 rounded-md" value="20:00">
+                        <button id="apply-to-weekdays-btn" class="ml-2 text-sm bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600">套用至平日</button>
+                        <button id="apply-to-weekends-btn" class="ml-1 text-sm bg-purple-500 text-white px-3 py-1 rounded-md hover:bg-purple-600">套用至假日</button>
+                    </div>
+                </div>
+                <div class="flex-1 overflow-y-auto p-6">
+                    ${rulerHTML}
+                    <table class="w-full">
+                        <tbody>
+                        ${weekDays.map((dayName, dayIndex) => `
+                            <tr class="day-container" data-day-index="${dayIndex}">
+                                <td class="w-1/6 font-bold text-gray-700">${dayName}</td>
+                                <td class="w-4/6">${renderDayTimeline(dayIndex)}</td>
+                                <td class="w-1/6 text-right">
+                                    <button class="toggle-unavailable-btn text-sm font-semibold ${currentPrefs[dayIndex] === 'unavailable' ? 'text-green-600' : 'text-red-500'}">${currentPrefs[dayIndex] === 'unavailable' ? '設為可排班' : '設為無法排班'}</button>
+                                </td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 flex justify-end items-center border-t">
+                    <button id="save-prefs-btn" class="font-noto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">儲存設定</button>
+                </div>
+            `;
+            modalContainer.classList.remove('hidden');
+            bindPreferenceModalEvents(employee, currentPrefs, selectedPrefType);
+        }
+
+        function bindPreferenceModalEvents(employee, currentPrefs, selectedPrefType) {
+            const modal = document.getElementById('modal-container');
+            const closeModal = () => modal.classList.add('hidden');
+            
+            modal.querySelector('#close-modal-btn').onclick = closeModal;
+            modal.querySelector('#save-prefs-btn').onclick = async () => {
+                appState.staffData[employee.id].preferences = currentPrefs;
+                await saveDataToJSON();
+                closeModal();
+                renderEmployeeManagementPage(pageContainer);
+            };
+
+            const timeToMinutes = (timeStr) => parseInt(timeStr.split(':')[0]) * 60 + parseInt(timeStr.split(':')[1]);
+
+            const mergeSlots = (existingSlots, newSlot) => {
+                const newStart = timeToMinutes(newSlot.start);
+                const newEnd = timeToMinutes(newSlot.end);
+                
+                const filteredSlots = (existingSlots || []).filter(slot => {
+                    const oldStart = timeToMinutes(slot.start);
+                    const oldEnd = timeToMinutes(slot.end);
+                    return oldEnd <= newStart || oldStart >= newEnd; // Keep slots that don't overlap
+                });
+
+                filteredSlots.push(newSlot);
+                filteredSlots.sort((a,b) => timeToMinutes(a.start) - timeToMinutes(b.start));
+                return filteredSlots;
+            };
+
+            const applyBatchTimeToDays = (daysToApply) => {
+                const start = modal.querySelector('#batch-start-time').value;
+                const end = modal.querySelector('#batch-end-time').value;
+                const prefType = modal.querySelector('input[name="prefType"]:checked').value;
+                if (start && end && start < end) {
+                    daysToApply.forEach(i => {
+                        const newSlot = { start, end, type: prefType };
+                        if (currentPrefs[i] === 'unavailable') currentPrefs[i] = [];
+                        currentPrefs[i] = mergeSlots(currentPrefs[i], newSlot);
+                    });
+                    renderPreferenceModal(employee, currentPrefs, prefType);
+                } else {
+                    alert('結束時間必須晚於開始時間');
+                }
+            };
+
+            modal.querySelector('#apply-to-weekdays-btn').onclick = () => applyBatchTimeToDays([1, 2, 3, 4, 5]);
+            modal.querySelector('#apply-to-weekends-btn').onclick = () => applyBatchTimeToDays([0, 6]);
+
+            modal.querySelectorAll('.day-container').forEach(dayContainer => {
+                const dayIndex = parseInt(dayContainer.dataset.dayIndex, 10);
+                const timeline = dayContainer.querySelector('.timeline-container');
+
+                dayContainer.querySelector('.toggle-unavailable-btn').onclick = () => {
+                    currentPrefs[dayIndex] = (currentPrefs[dayIndex] === 'unavailable') ? [] : 'unavailable';
+                    const currentPrefType = modal.querySelector('input[name="prefType"]:checked').value;
+                    renderPreferenceModal(employee, currentPrefs, currentPrefType);
+                };
+                
+                timeline.onmousedown = e => {
+                    if (currentPrefs[dayIndex] === 'unavailable' || e.target.classList.contains('timeline-slot')) return;
+
+                    const rect = timeline.getBoundingClientRect();
+                    let startX = e.clientX - rect.left;
+                    const prefType = modal.querySelector('input[name="prefType"]:checked').value;
+
+                    const selectionDiv = document.createElement('div');
+                    selectionDiv.className = `timeline-selection ${prefType}`;
+                    timeline.appendChild(selectionDiv);
+                    
+                    const tooltipDiv = document.createElement('div');
+                    tooltipDiv.className = 'slot-tooltip';
+                    tooltipDiv.style.opacity = '1';
+                    tooltipDiv.style.bottom = '110%';
+                    selectionDiv.appendChild(tooltipDiv);
+
+                    const fromMinutes = (mins) => `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
+
+                    const handleMouseMove = moveEvent => {
+                        let currentX = Math.max(0, Math.min(moveEvent.clientX - rect.left, rect.width));
+                        const left = Math.min(startX, currentX);
+                        const width = Math.abs(currentX - startX);
+                        selectionDiv.style.left = `${left / rect.width * 100}%`;
+                        selectionDiv.style.width = `${width / rect.width * 100}%`;
+                        
+                        const startMins = Math.round(left / rect.width * 1440 / 15) * 15;
+                        const endMins = Math.round((left + width) / rect.width * 1440 / 15) * 15;
+                        tooltipDiv.textContent = `${fromMinutes(startMins)} - ${fromMinutes(endMins)}`;
+                    };
+
+                    const handleMouseUp = upEvent => {
+                        document.removeEventListener('mousemove', handleMouseMove);
+                        document.removeEventListener('mouseup', handleMouseUp);
+                        
+                        const endX = Math.max(0, Math.min(upEvent.clientX - rect.left, rect.width));
+                        const left = Math.min(startX, endX);
+                        const width = Math.abs(endX - startX);
+
+                        if (width / rect.width > 0.01) {
+                            const startMins = Math.round(left / rect.width * 1440 / 15) * 15;
+                            const endMins = Math.round((left + width) / rect.width * 1440 / 15) * 15;
+                            const newSlot = { start: fromMinutes(startMins), end: fromMinutes(endMins), type: prefType };
+                            
+                            if (currentPrefs[dayIndex] === 'unavailable') currentPrefs[dayIndex] = [];
+                            currentPrefs[dayIndex] = mergeSlots(currentPrefs[dayIndex], newSlot);
+                            renderPreferenceModal(employee, currentPrefs, prefType);
+                        }
+                        selectionDiv.remove();
+                    };
+
+                    document.addEventListener('mousemove', handleMouseMove);
+                    document.addEventListener('mouseup', handleMouseUp);
+                };
+            });
+        }
+
+        function renderTierModal(timeslot) {
+            const modalContainer = document.getElementById('modal-container');
+            const modalContent = document.getElementById('modal-content');
+            const currentSchedule = appState.allSchedules[appState.currentTemplateId];
+            const currentTierData = currentSchedule.strategicTiers[timeslot] || { tier: 'C', formula: {} };
+            
+            modalContent.innerHTML = `
+                <div class="p-6 border-b flex justify-between items-center">
+                    <h2 class="text-xl font-bold font-noto">設定時段戰略等級 (${timeslot})</h2>
+                    <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div>
+                        <label class="font-semibold block mb-2">時段等級</label>
+                        <select id="tier-select" class="w-full p-2 border rounded">
+                            <option value="SSS" ${currentTierData.tier === 'SSS' ? 'selected' : ''}>SSS 級戰區 (黃金尖峰)</option>
+                            <option value="A" ${currentTierData.tier === 'A' ? 'selected' : ''}>A 級戰區 (一般尖峰)</option>
+                            <option value="B" ${currentTierData.tier === 'B' ? 'selected' : ''}>B 級戰區 (平日午餐)</option>
+                            <option value="C" ${currentTierData.tier === 'C' ? 'selected' : ''}>C 級守備區 (離峰)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold mb-2 border-b pb-2">戰力配置規則 (可選)</h3>
+                        <div class="grid grid-cols-2 gap-4 mt-4 text-sm">
+                            <div>
+                                <label class="font-medium">最低戰力要求</label>
+                                <div class="flex items-center gap-2 mt-1">
+                                    至少 <input id="formula-min-count" type="number" class="w-16 p-1 border rounded" value="${currentTierData.formula.minCount || 0}"> 人,
+                                    績效 <input id="formula-min-stars" type="number" class="w-16 p-1 border rounded" value="${currentTierData.formula.minStars || 0}"> 星以上
+                                </div>
+                            </div>
+                            <div>
+                                <label class="font-medium">平均戰力門檻</label>
+                                <div class="flex items-center gap-2 mt-1">
+                                    平均績效不低於 <input id="formula-avg-stars" type="number" step="0.1" class="w-16 p-1 border rounded" value="${currentTierData.formula.avgStars || 0}"> 星
+                                </div>
+                            </div>
+                            <div>
+                                <label class="font-medium">新人比例限制</label>
+                                <div class="flex items-center gap-2 mt-1">
+                                    績效 2 星以下最多 <input id="formula-max-newbies" type="number" class="w-16 p-1 border rounded" value="${currentTierData.formula.maxNewbies || 0}"> 人
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 flex justify-end items-center border-t">
+                    <button id="save-tier-btn" class="font-noto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">儲存設定</button>
+                </div>
+            `;
+
+            modalContainer.classList.remove('hidden');
+            modalContent.querySelector('#close-modal-btn').onclick = () => modalContainer.classList.add('hidden');
+            modalContent.querySelector('#save-tier-btn').onclick = () => {
+                const tier = document.getElementById('tier-select').value;
+                const formula = {
+                    minCount: parseInt(document.getElementById('formula-min-count').value) || 0,
+                    minStars: parseInt(document.getElementById('formula-min-stars').value) || 0,
+                    avgStars: parseFloat(document.getElementById('formula-avg-stars').value) || 0,
+                    maxNewbies: parseInt(document.getElementById('formula-max-newbies').value) || 0
+                };
+                appState.allSchedules[appState.currentTemplateId].strategicTiers[timeslot] = { tier, formula };
+                renderDemandPlanningPage(pageContainer);
+                modalContainer.classList.add('hidden');
+            };
+        }
+        
+        function renderSkillEditModal(employee) {
+            const modalContainer = document.getElementById('modal-container');
+            const modalContent = document.getElementById('modal-content');
+            let currentSkills = JSON.parse(JSON.stringify(employee.skills || {}));
+            const allRoles = appState.allSchedules[appState.currentTemplateId].roles.map(r => r.name);
+            
+            const renderSkillRows = () => {
+                return Object.entries(currentSkills).map(([skillName, skillData]) => `
+                    <div class="flex items-center gap-4 p-2 border-b">
+                        <div class="w-1/3 font-semibold">${skillName}</div>
+                        <div class="w-1/3">
+                            <select class="skill-type-select w-full p-1 border rounded" data-skill-name="${skillName}">
+                                <option value="primary" ${skillData.type === 'primary' ? 'selected' : ''}>主要</option>
+                                <option value="secondary" ${skillData.type === 'secondary' ? 'selected' : ''}>次要</option>
+                            </select>
+                        </div>
+                        <div class="w-1/3 flex items-center justify-between">
+                            <div class="star-rating flex" data-skill-name="${skillName}">
+                                ${[1,2,3,4,5].map(star => `<span class="star text-2xl ${skillData.rating >= star ? 'selected' : ''}" data-value="${star}">★</span>`).join('')}
+                            </div>
+                            <button class="delete-skill-btn text-red-500" data-skill-name="${skillName}">✕</button>
+                        </div>
+                    </div>
+                `).join('');
+            };
+            
+            const renderAddSkillDropdown = () => {
+                const availableSkills = allRoles.filter(role => !currentSkills[role]);
+                return `
+                    <select id="add-skill-select" class="flex-1 p-2 border rounded">
+                        <option value="">-- 新增技能 --</option>
+                        ${availableSkills.map(skill => `<option value="${skill}">${skill}</option>`).join('')}
+                    </select>
+                `;
+            };
+
+            modalContent.innerHTML = `
+                <div class="p-6 border-b flex justify-between items-center">
+                    <h2 class="text-xl font-bold font-noto">編輯技能與績效 - ${employee.name}</h2>
+                    <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                </div>
+                <div class="p-6 flex-1 overflow-y-auto">
+                    <div id="skill-list">
+                        ${renderSkillRows()}
+                    </div>
+                    <div class="mt-4 flex items-center gap-2">
+                        ${renderAddSkillDropdown()}
+                        <button id="add-skill-btn" class="px-4 py-2 bg-green-600 text-white rounded">新增</button>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 flex justify-end items-center border-t">
+                    <button id="save-skills-btn" class="font-noto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">儲存設定</button>
+                </div>
+            `;
+            modalContainer.classList.remove('hidden');
+            bindSkillEditModalEvents(employee, currentSkills);
+        }
+
+        function bindSkillEditModalEvents(employee, currentSkills) {
+            const modal = document.getElementById('modal-container');
+            const modalContent = document.getElementById('modal-content');
+            const closeModal = () => modal.classList.add('hidden');
+
+            const refreshModalContent = () => {
+                const allRoles = appState.allSchedules[appState.currentTemplateId].roles.map(r => r.name);
+                const skillListHTML = Object.entries(currentSkills).map(([name, data]) => `
+                    <div class="flex items-center gap-4 p-2 border-b">
+                        <div class="w-1/3 font-semibold">${name}</div>
+                        <div class="w-1/3">
+                            <select class="skill-type-select w-full p-1 border rounded" data-skill-name="${name}">
+                                <option value="primary" ${data.type === 'primary' ? 'selected' : ''}>主要</option>
+                                <option value="secondary" ${data.type === 'secondary' ? 'selected' : ''}>次要</option>
+                            </select>
+                        </div>
+                        <div class="w-1/3 flex items-center justify-between">
+                            <div class="star-rating flex" data-skill-name="${name}">
+                                ${[1,2,3,4,5].map(star => `<span class="star text-2xl ${data.rating >= star ? 'selected' : ''}" data-value="${star}">★</span>`).join('')}
+                            </div>
+                            <button class="delete-skill-btn text-red-500" data-skill-name="${name}">✕</button>
+                        </div>
+                    </div>
+                `).join('');
+                
+                const availableSkills = allRoles.filter(role => !currentSkills[role]);
+                const addSkillDropdownHTML = `
+                    <select id="add-skill-select" class="flex-1 p-2 border rounded">
+                        <option value="">-- 新增技能 --</option>
+                        ${availableSkills.map(skill => `<option value="${skill}">${skill}</option>`).join('')}
+                    </select>
+                `;
+                
+                document.getElementById('skill-list').innerHTML = skillListHTML;
+                document.getElementById('add-skill-select').parentElement.querySelector('select').innerHTML = addSkillDropdownHTML;
+            };
+
+            // Event Delegation: Single listener for the whole modal content
+            modalContent.onclick = async (e) => {
+                const target = e.target;
+
+                // Close Button
+                if (target.closest('#close-modal-btn')) {
+                    closeModal();
+                }
+
+                // Save Button
+                if (target.closest('#save-skills-btn')) {
+                    const primaryCount = Object.values(currentSkills).filter(s => s.type === 'primary').length;
+                    if (primaryCount > 1) {
+                        alert('錯誤：一位員工只能有一個主要技能。');
+                        return;
+                    }
+                    appState.staffData[employee.id].skills = currentSkills;
+                    await saveDataToJSON();
+                    closeModal();
+                    
+                    // Explicitly set page state and re-render. This is the fix.
+                    appState.currentPage = 'employee_management';
+                    renderPage(); 
+                }
+
+                // Add Skill Button
+                if (target.closest('#add-skill-btn')) {
+                    const select = document.getElementById('add-skill-select');
+                    const newSkillName = select.value;
+                    if (newSkillName && !currentSkills[newSkillName]) {
+                        currentSkills[newSkillName] = { type: 'secondary', rating: 3 };
+                        refreshModalContent();
+                    }
+                }
+                
+                // Delete Skill Button
+                const deleteBtn = target.closest('.delete-skill-btn');
+                if (deleteBtn) {
+                    const skillName = deleteBtn.dataset.skillName;
+                    delete currentSkills[skillName];
+                    refreshModalContent();
+                }
+
+                // Star Rating
+                const star = target.closest('.star');
+                if (star) {
+                    const ratingContainer = star.parentElement;
+                    const skillName = ratingContainer.dataset.skillName;
+                    const value = parseInt(star.dataset.value, 10);
+                    currentSkills[skillName].rating = value;
+                    refreshModalContent();
+                }
+            };
+            
+            modalContent.onchange = (e) => {
+                // Skill Type Select
+                if (e.target.classList.contains('skill-type-select')) {
+                    const skillName = e.target.dataset.skillName;
+                    currentSkills[skillName].type = e.target.value;
+                }
+            };
+        }
+        
+                function renderTemplatesModal() {
+            const modalContainer = document.getElementById('modal-container');
+            const modalContent = document.getElementById('modal-content');
+            const currentUnitMeta = appState.unitMetadata[appState.currentUnitId];
+            
+            const DAY_NAMES = ['日', '一', '二', '三', '四', '五', '六'];
+            const formatApplicability = (template) => {
+                const parts = [];
+                // Format week days
+                if (template.days && template.days.length > 0) {
+                    const sortedDays = [...template.days].sort((a, b) => a - b);
+                    parts.push(sortedDays.map(d => `週${DAY_NAMES[d]}`).join(', '));
+                }
+                // Format specific dates
+                if (template.dates && template.dates.length > 0) {
+                    parts.push(...template.dates);
+                }
+                
+                if (parts.length === 0) return '未指定適用範圍';
+                return parts.join('； ');
+            };
+
+            modalContent.innerHTML = `
+                <div class="p-6 border-b flex justify-between items-center">
+                    <h2 class="text-xl font-bold font-noto">管理排班範本 (可拖曳排序)</h2>
+                    <button id="add-template-btn" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg">新增範本</button>
+                </div>
+                <ul id="template-list" class="space-y-2 p-6 max-h-[60vh] overflow-y-auto">
+                    ${(currentUnitMeta.templates || []).map((template, index) => `
+                         <li key="${template.id}" draggable="true" data-index="${index}" class="flex items-center justify-between p-3 rounded-md bg-slate-100 hover:bg-slate-200">
+                            <div class="flex items-center gap-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cursor-grab text-slate-400"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                                <div>
+                                    <span class="font-semibold text-slate-800">${template.name}</span>
+                                    <p class="text-sm text-slate-500">${formatApplicability(template)}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button class="copy-template-btn p-2 hover:bg-slate-300 rounded-full" data-index="${index}" title="複製範本"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></button>
+                                <button class="edit-template-btn p-2 hover:bg-slate-300 rounded-full" data-index="${index}" title="編輯範本"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-4.12a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.38"/><path d="M16.5 2.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+                                <button class="delete-template-btn p-2 hover:bg-red-200 rounded-full" data-index="${index}" title="刪除範本"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                            </div>
+                        </li>
+                    `).join('')}
+                </ul>
+                <div class="bg-gray-50 px-6 py-4 flex justify-end items-center border-t">
+                    <button id="close-modal-btn" class="font-noto px-4 py-2 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">關閉</button>
+                </div>
+            `;
+            modalContainer.classList.remove('hidden');
+            bindTemplatesModalEvents();
+        }
+        
+        function bindTemplatesModalEvents() {
+            const modal = document.getElementById('modal-container');
+            modal.querySelector('#close-modal-btn').onclick = () => {
+                modal.classList.add('hidden');
+                renderDemandPlanningPage(pageContainer); // Re-render main page to update template list
+            };
+            modal.querySelector('#add-template-btn').onclick = () => renderActionModal({ type: 'add-template' });
+            
+            modal.querySelectorAll('.edit-template-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const index = parseInt(btn.dataset.index, 10);
+                    const template = appState.unitMetadata[appState.currentUnitId].templates[index];
+                    renderActionModal({ type: 'edit-template', data: { ...template, index } });
+                };
+            });
+            modal.querySelectorAll('.copy-template-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const index = parseInt(btn.dataset.index, 10);
+                    const template = appState.unitMetadata[appState.currentUnitId].templates[index];
+                    renderActionModal({ type: 'copy-template', data: { ...template, index } });
+                };
+            });
+            modal.querySelectorAll('.delete-template-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const index = parseInt(btn.dataset.index, 10);
+                    const template = appState.unitMetadata[appState.currentUnitId].templates[index];
+                    renderActionModal({ type: 'delete-template', data: { ...template, index } });
+                };
+            });
+        }
+
+        function renderActionModal(config) {
+            const modalContainer = document.getElementById('modal-container');
+            const modalContent = document.getElementById('modal-content');
+            const currentSchedule = appState.allSchedules[appState.currentTemplateId];
+            const currentUnitMeta = appState.unitMetadata[appState.currentUnitId];
+            const closeModal = () => modalContainer.classList.add('hidden');
+            let modalHTML = '';
+            
+            const timeToMinutes = (timeStr) => parseInt(timeStr.split(':')[0]) * 60 + parseInt(timeStr.split(':')[1]);
+
+            switch (config.type) {
+                case 'add-role':
+                    modalHTML = `
+                        <div class="p-6 border-b"><h2 class="text-xl font-bold font-noto">新增群組 (技能)</h2></div>
+                        <div class="p-6"><label for="role-name-input" class="block text-sm font-medium text-gray-700">群組名稱</label><input type="text" id="role-name-input" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="例如：外場服務員" autofocus></div>
+                        <div class="bg-gray-50 px-6 py-4 flex justify-end items-center border-t gap-3"><button id="close-action-modal" class="px-4 py-2 bg-white border rounded-md">取消</button><button id="confirm-action" class="px-4 py-2 bg-blue-600 text-white rounded-md">確認</button></div>`;
+                    break;
+                case 'add-timeslot':
+                    let defaultStartTime = '09:00', defaultEndTime = '10:00';
+                    if (currentSchedule.timeslots && currentSchedule.timeslots.length > 0) {
+                        const latestEndTime = currentSchedule.timeslots.map(slot => slot.split('-')[1]).sort((a,b)=>b.localeCompare(a))[0];
+                        defaultStartTime = latestEndTime;
+                        const [h, m] = latestEndTime.split(':');
+                        defaultEndTime = `${String((parseInt(h)+1)%24).padStart(2,'0')}:${m}`;
+                    }
+                    modalHTML = `
+                        <div class="p-6 border-b"><h2 class="text-xl font-bold font-noto">新增時間區段</h2></div>
+                        <div class="p-6 grid grid-cols-2 gap-6"><div><label for="start-time-input" class="block text-sm font-medium">開始時間</label><input type="time" id="start-time-input" class="mt-1 block w-full p-2 border rounded-md" step="1800" value="${defaultStartTime}"></div><div><label for="end-time-input" class="block text-sm font-medium">結束時間</label><input type="time" id="end-time-input" class="mt-1 block w-full p-2 border rounded-md" step="1800" value="${defaultEndTime}"></div></div>
+                        <div class="bg-gray-50 px-6 py-4 flex justify-end items-center border-t gap-3"><button id="close-action-modal" class="px-4 py-2 bg-white border rounded-md">取消</button><button id="confirm-action" class="px-4 py-2 bg-blue-600 text-white rounded-md">確認</button></div>`;
+                    break;
+                // Other cases for template editing can be added here
+                default:
+                     modalHTML = `<div class="p-6"><h2 class="text-xl font-bold">未知的操作</h2><p>操作 "${config.type}" 尚未被設定。</p><div class="mt-4 flex justify-end"><button id="close-action-modal" class="px-4 py-2 bg-gray-200 rounded-md">關閉</button></div></div>`;
+            }
+
+            modalContent.innerHTML = modalHTML;
+            modalContainer.classList.remove('hidden');
+
+            modalContent.querySelector('#close-action-modal')?.addEventListener('click', closeModal);
+            const confirmBtn = modalContent.querySelector('#confirm-action');
+
+            if (confirmBtn) {
+                confirmBtn.onclick = () => {
+                    if (config.type === 'add-role') {
+                        const input = document.getElementById('role-name-input');
+                        const newRoleName = input.value.trim();
+                        if (newRoleName) {
+                            const newRoleId = `role_${Date.now()}`;
+                            currentSchedule.roles.push({ id: newRoleId, name: newRoleName });
+                            if (!currentSchedule.headcount[newRoleId]) currentSchedule.headcount[newRoleId] = {};
+                            closeModal();
+                            renderDemandPlanningPage(pageContainer);
+                        }
+                    } else if (config.type === 'add-timeslot') {
+                        const start = document.getElementById('start-time-input').value;
+                        const end = document.getElementById('end-time-input').value;
+                        if (!start || !end || start >= end) {
+                            alert('結束時間必須晚於開始時間！'); return;
+                        }
+                        const newTimeslot = `${start}-${end}`;
+                        const isOverlapping = currentSchedule.timeslots.some(slot => {
+                            const [existingStart, existingEnd] = slot.split('-');
+                            return timeToMinutes(start) < timeToMinutes(existingEnd) && timeToMinutes(existingStart) < timeToMinutes(end);
+                        });
+                        if (isOverlapping) {
+                            alert('新增的時段與現有時段重疊！'); return;
+                        }
+                        currentSchedule.timeslots.push(newTimeslot);
+                        closeModal();
+                        renderDemandPlanningPage(pageContainer);
+                    }
+                };
+            }
+        }
+
+
+        // --- CSV Import/Export ---
+                function handleDownloadTemplate() {
+            const employees = Object.values(appState.staffData);
+            const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+            let csvContent = "\uFEFF";
+            
+            const dayHeaders = weekDays.flatMap(day => [`${day}_可排時段`, `${day}_禁排時段`]);
+            // --- NEW: Add '預期週工時' to header ---
+            const header = ['員工編號', '員工姓名', '預期週工時', '主要技能', '主要技能評級', '次要技能1', '次要技能1評級', '次要技能2', '次要技能2評級', ...dayHeaders];
+            csvContent += header.join(',') + '\r\n';
+
+            employees.forEach(emp => {
+                const skills = emp.skills || {};
+                const primary = Object.entries(skills).find(([_,v]) => v.type === 'primary');
+                const secondaries = Object.entries(skills).filter(([_,v]) => v.type === 'secondary');
+                
+                // --- NEW: Add expectedWeeklyHours to row ---
+                const row = [emp.id, emp.name, emp.expectedWeeklyHours || 0];
+                
+                row.push(primary ? primary[0] : '', primary ? primary[1].rating : '');
+                row.push(secondaries[0] ? secondaries[0][0] : '', secondaries[0] ? secondaries[0][1].rating : '');
+                row.push(secondaries[1] ? secondaries[1][0] : '', secondaries[1] ? secondaries[1][1].rating : '');
+
+                for (let i = 0; i < 7; i++) {
+                    const pref = emp.preferences?.[i];
+                    let availableCell = "";
+                    let forbiddenCell = "";
+
+                    if (pref === 'unavailable') {
+                        availableCell = "不排班";
+                        forbiddenCell = "";
+                    } else if (Array.isArray(pref) && pref.length > 0) {
+                        const availableSlots = pref.filter(s => s.type !== 'forbidden').map(s => `${s.type}:${s.start}-${s.end}`).join(';');
+                        const forbiddenSlots = pref.filter(s => s.type === 'forbidden').map(s => `${s.start}-${s.end}`).join(';');
+                        availableCell = availableSlots;
+                        forbiddenCell = forbiddenSlots;
+                    }
+                    row.push(`"${availableCell}"`, `"${forbiddenCell}"`);
+                }
+                csvContent += row.join(',') + '\r\n';
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "排班偏好與技能範本_v6.9.csv";
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        function handleImportPreferences(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    parseAndApplyPreferences(e.target.result);
+                    alert('偏好設定已成功匯入！');
+                    renderEmployeeManagementPage(pageContainer);
+                } catch (error) {
+                    alert(`匯入失敗：${error.message}`);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+                function parseAndApplyPreferences(csvText) {
+            const lines = csvText.trim().split(/\r\n|\n/);
+            if (lines.length < 2) throw new Error("CSV 檔案沒有內容");
+
+            const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+            const expectedHeaderStart = ['員工編號', '員工姓名', '預期週工時'];
+            if (!expectedHeaderStart.every((h, i) => header[i] === h)) {
+                throw new Error("CSV 標頭格式不符，請使用下載的範本進行編輯。");
+            }
+
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+                const empId = values[0];
+                if (!appState.staffData[empId]) continue;
+
+                // --- NEW: Read expectedWeeklyHours from column index 2 ---
+                const expectedHours = parseInt(values[2], 10);
+                if (!isNaN(expectedHours)) {
+                    appState.staffData[empId].expectedWeeklyHours = expectedHours;
+                }
+
+                // Skills data now starts from index 3
+                const newSkills = {};
+                if (values[3]) newSkills[values[3]] = { type: 'primary', rating: parseInt(values[4]) || 3 };
+                if (values[5]) newSkills[values[5]] = { type: 'secondary', rating: parseInt(values[6]) || 3 };
+                if (values[7]) newSkills[values[7]] = { type: 'secondary', rating: parseInt(values[8]) || 3 };
+                appState.staffData[empId].skills = newSkills;
+
+                // Preferences data now starts from index 9
+                const newPreferences = {};
+                for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+                    const availableValue = values[9 + (dayIndex * 2)];
+                    const forbiddenValue = values[9 + (dayIndex * 2) + 1];
+                    
+                    if (availableValue === "不排班") {
+                        newPreferences[dayIndex] = 'unavailable';
+                        continue;
+                    }
+                    
+                    let daySlots = [];
+                    if (availableValue) {
+                        const availableSlots = availableValue.split(';').map(slotStr => {
+                            const parts = slotStr.split(':');
+                            if (parts.length !== 2) return null;
+                            const [type, times] = parts;
+                            const [start, end] = times.split('-');
+                            if (['priority', 'available'].includes(type) && start && end) return { type, start, end };
+                            return null;
+                        }).filter(Boolean);
+                        daySlots.push(...availableSlots);
+                    }
+                    if (forbiddenValue) {
+                         const forbiddenSlots = forbiddenValue.split(';').map(slotStr => {
+                            const [start, end] = slotStr.split('-');
+                            if (start && end) return { type: 'forbidden', start, end };
+                            return null;
+                        }).filter(Boolean);
+                        daySlots.push(...forbiddenSlots);
+                    }
+
+                    if (daySlots.length > 0) {
+                        daySlots.sort((a,b) => a.start.localeCompare(b.start));
+                        newPreferences[dayIndex] = daySlots;
+                    }
+                }
+                appState.staffData[empId].preferences = newPreferences;
+            }
+        }
+
+        // --- App Initialization ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            pageContainer = document.getElementById('page-container');
+            await init();
+        });
+
+    </script>
+</body>
+</html>
+?

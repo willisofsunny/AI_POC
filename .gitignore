@@ -1,0 +1,17 @@
+# OS
+.DS_Store
+
+# Node
+node_modules/
+npm-debug.log*
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Misc build caches
+.cache/
+dist/
+build/
+out/
+.next/
+

@@ -1,0 +1,92 @@
+{
+  "staffData": {
+    "EMP-001": {
+      "id": "EMP-001",
+      "name": "‹;Ú",
+      "avatar": "https://i.pravatar.cc/150?u=EMP-001",
+      "expectedWeeklyHours": 40,
+      "skills": {
+        ";¡": { "type": "secondary", "rating": 5 },
+        "-": { "type": "primary", "rating": 5 }
+      },
+      "preferences": {
+        "0": "unavailable",
+        "1": [{ "start": "09:00", "end": "18:00", "type": "available" }],
+        "2": [{ "start": "09:00", "end": "18:00", "type": "available" }],
+        "3": [{ "start": "09:00", "end": "18:00", "type": "available" }],
+        "4": [{ "start": "09:00", "end": "18:00", "type": "available" }],
+        "5": [{ "start": "09:00", "end": "18:00", "type": "available" }],
+        "6": "unavailable"
+      }
+    },
+    "EMP-002": {
+      "id": "EMP-002",
+      "name": "N+…",
+      "avatar": "https://i.pravatar.cc/150?u=EMP-002",
+      "expectedWeeklyHours": 35,
+      "skills": {
+        "-": { "type": "primary", "rating": 4 },
+        "™™": { "type": "secondary", "rating": 4 }
+      },
+      "preferences": {
+        "1": [{ "start": "10:00", "end": "19:00", "type": "available" }],
+        "2": [{ "start": "10:00", "end": "19:00", "type": "available" }],
+        "3": [{ "start": "10:00", "end": "19:00", "type": "available" }],
+        "4": [{ "start": "10:00", "end": "19:00", "type": "available" }],
+        "5": [{ "start": "10:00", "end": "19:00", "type": "available" }]
+      }
+    },
+    "EMP-003": {
+      "id": "EMP-003",
+      "name": "5Ú+",
+      "avatar": "https://i.pravatar.cc/150?u=EMP-003",
+      "expectedWeeklyHours": 30,
+      "skills": {
+        "": { "type": "primary", "rating": 3 },
+        "Ø": { "type": "secondary", "rating": 3 }
+      },
+      "preferences": {}
+    }
+  },
+  "unitMetadata": {
+    "kitchen": {
+      "name": "g4",
+      "activeTemplate": "kitchen_weekday",
+      "templates": [
+        { "id": "kitchen_weekday", "name": "såíh" },
+        { "id": "kitchen_weekend", "name": "Gåíh" }
+      ]
+    }
+  },
+  "allSchedules": {
+    "kitchen_weekday": {
+      "roles": [
+        { "id": "role_chef", "name": ";Ú" },
+        { "id": "role_cook", "name": "Ú+" },
+        { "id": "role_prep", "name": "™™" }
+      ],
+      "timeslots": ["09:00-12:00", "12:00-15:00", "15:00-18:00", "18:00-21:00"],
+      "headcount": {
+        "role_chef": {
+          "09:00-12:00": 1,
+          "12:00-15:00": 1,
+          "15:00-18:00": 1,
+          "18:00-21:00": 1
+        },
+        "role_cook": {
+          "09:00-12:00": 2,
+          "12:00-15:00": 3,
+          "15:00-18:00": 3,
+          "18:00-21:00": 2
+        },
+        "role_prep": {
+          "09:00-12:00": 1,
+          "12:00-15:00": 1,
+          "15:00-18:00": 1,
+          "18:00-21:00": 1
+        }
+      },
+      "strategicTiers": {}
+    }
+  }
+}

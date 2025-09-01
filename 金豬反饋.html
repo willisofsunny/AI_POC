@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI智慧排班系統易用性測試互動報告 - 金豬食堂">
+    <title>AI智慧排班Demo-金豬食堂 - 易用性測試互動報告</title>
+    
+    <!-- 外部依賴 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #0d9488;
+            --primary-light: #14b8a6;
+            --primary-dark: #0f766e;
+            --accent-color: #f59e0b;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --border-color: #e2e8f0;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 200px;
+            margin: 0 auto;
+            height: 200px;
+        }
+
+        .chart-center-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .tab-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-btn:hover {
+            color: var(--primary-light);
+            border-bottom-color: var(--primary-light);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .chart-container-bar {
+            position: relative;
+            width: 100%;
+            height: 350px;
+            max-height: 450px;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .priority-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .priority-high {
+            background-color: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .priority-medium {
+            background-color: #fffbeb;
+            color: #d97706;
+            border: 1px solid #fed7aa;
+        }
+
+        .category-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .filter-btn {
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .filter-btn.active {
+            background-color: var(--bg-secondary);
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-btn:hover:not(.active) {
+            background-color: var(--primary-light);
+            color: white;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .chart-container { max-width: 150px; height: 150px; }
+            .chart-container-bar { height: 300px; }
+        }
+
+        /* 提升可訪問性 */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* 焦點樣式 */
+        .tab-btn:focus,
+        .filter-btn:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        /* 載入狀態 */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid var(--primary-color);
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-2">AI智慧排班Demo-金豬食堂</h1>
+            <p class="text-lg text-slate-600">易用性測試互動報告</p>
+        </header>
+
+        <!-- 儀表板區域 -->
+        <section id="dashboard" class="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- SUS分數卡片 -->
+            <div class="card p-6 flex flex-col justify-center items-center">
+                <h3 class="font-bold text-lg mb-2 text-slate-700">系統易用性 (SUS)</h3>
+                <div class="chart-container">
+                    <canvas id="susChart" aria-label="SUS分數圖表"></canvas>
+                    <div class="chart-center-text">
+                        <span id="susScore" class="text-4xl font-bold text-amber-600"></span>
+                        <span class="text-sm text-slate-500 block">/ 100</span>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-500 mt-2 text-center">分數略低於業界平均 (68)，代表易用性尚有改善空間。</p>
+            </div>
+
+            <!-- 核心問題摘要 -->
+            <div class="card p-6 lg:col-span-2">
+                <h3 class="font-bold text-lg mb-4 text-slate-700">核心問題摘要 (TL;DR)</h3>
+                <div class="space-y-4 text-slate-600">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <p><strong class="text-slate-800 font-semibold">AI 不夠聰明：</strong>無法支援「員工固定班別」、「一人多崗」等複雜規則，排班結果如同「抽盲包」。</p>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <div class="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <p><strong class="text-slate-800 font-semibold">介面資訊不足：</strong>班表結果缺少「群組標籤」、「人力統計」與「違規提醒」，導致審核困難。</p>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <div class="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <p><strong class="text-slate-800 font-semibold">系統彈性過低：</strong>「一人只能一群組」的限制與「全域重排」的機制不符實際需求。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 主要內容區域 -->
+        <main class="card p-4 sm:p-8">
+            <!-- 標籤導航 -->
+            <div class="border-b border-slate-200 mb-6">
+                <nav class="-mb-px flex space-x-6 overflow-x-auto" aria-label="報告標籤">
+                    <button id="tab-btn-overview" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-slate-500" aria-selected="false" role="tab">
+                        總覽與建議
+                    </button>
+                    <button id="tab-btn-painpoints" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-slate-500" aria-selected="false" role="tab">
+                        痛點分析
+                    </button>
+                    <button id="tab-btn-highlights" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-slate-500" aria-selected="false" role="tab">
+                        優點與亮點
+                    </button>
+                    <button id="tab-btn-data" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-slate-500" aria-selected="false" role="tab">
+                        任務表現數據
+                    </button>
+                </nav>
+            </div>
+
+            <!-- 總覽與建議標籤內容 -->
+            <div id="tab-content-overview" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-overview">
+                <h3 class="text-2xl font-bold mb-4 text-slate-800">改善建議</h3>
+                <div class="overflow-x-auto mb-10">
+                    <table class="min-w-full divide-y divide-slate-200" role="table">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">優先級</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">建議方向</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">具體內容</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recommendations-table" class="bg-white divide-y divide-slate-200">
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="text-2xl font-bold mb-4 text-slate-800">開發規劃階段</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div id="current-plan" class="bg-blue-50 border border-blue-200 p-6 rounded-lg">
+                        <h4 class="font-bold text-lg text-blue-800 mb-3">Current Plan (MVP - 8/20 上線基礎版本)</h4>
+                        <p class="text-sm text-blue-700 mb-4">目標：確保核心功能穩定與可用，滿足基礎排班需求，避免系統崩潰或產出嚴重錯誤的結果。</p>
+                        <ul class="space-y-3 list-disc list-inside text-blue-900">
+                        </ul>
+                    </div>
+                    <div id="next-plan" class="bg-green-50 border border-green-200 p-6 rounded-lg">
+                        <h4 class="font-bold text-lg text-green-800 mb-3">Next Plan (後續優化 - 金豬需求項目)</h4>
+                        <p class="text-sm text-green-700 mb-4">目標：將金豬食堂的深度需求挑選共通需求納入優化，提升 AI 智慧與系統彈性，並持續優化介面與進階功能。</p>
+                        <ul class="space-y-3 list-disc list-inside text-green-900">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 痛點分析標籤內容 -->
+            <div id="tab-content-painpoints" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-painpoints">
+                <div class="sm:flex sm:items-center sm:justify-between mb-6">
+                    <h3 class="text-2xl font-bold text-slate-800">使用者回饋痛點</h3>
+                    <div class="mt-3 sm:mt-0 sm:ml-4">
+                        <div id="painpoint-filters" class="flex space-x-2 p-1 bg-slate-100 rounded-lg" role="group" aria-label="痛點篩選器">
+                            <button data-filter="all" class="filter-btn active px-3 py-1 text-sm font-medium rounded-md">全部</button>
+                            <button data-filter="module1" class="filter-btn px-3 py-1 text-sm font-medium rounded-md">規則設定</button>
+                            <button data-filter="module2" class="filter-btn px-3 py-1 text-sm font-medium rounded-md">AI 排班</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="painpoints-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
+            </div>
+
+            <!-- 優點與亮點標籤內容 -->
+            <div id="tab-content-highlights" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-highlights">
+                <h3 class="text-2xl font-bold mb-4 text-slate-800">優點與亮點</h3>
+                <div id="highlights-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                </div>
+            </div>
+            
+            <!-- 任務表現數據標籤內容 -->
+            <div id="tab-content-data" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-data">
+                <h3 class="text-2xl font-bold mb-4 text-slate-800">各項任務操作困難度評分</h3>
+                <p class="text-sm text-slate-500 mb-4">分數越高代表越簡單 (5分制)。</p>
+                <div class="chart-container-bar">
+                    <canvas id="taskDifficultyChart" aria-label="任務困難度圖表"></canvas>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="text-center mt-8">
+            <p class="text-sm text-slate-500">
+                <a href="https://huanuage-my.sharepoint.com/:f:/g/personal/liz_li_mayohr_com/EtZ0rZ0uvrdHuK5axrRndjkBqqEybD69VvUaF0rBI9Ea4A?e=fXYnXZ" 
+                   target="_blank" 
+                   rel="noopener noreferrer" 
+                   class="hover:text-teal-600 underline transition-colors duration-200">
+                    原始資料來源
+                </a>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // 配置常量
+        const CONFIG = {
+            ANIMATION_DURATION: 300,
+            CHART_COLORS: {
+                primary: '#0d9488',
+                secondary: '#14b8a6',
+                accent: '#f59e0b',
+                success: '#10b981',
+                warning: '#f59e0b',
+                danger: '#ef4444'
+            }
+        };
+
+        // 報告數據
+        const reportData = {
+            scores: {
+                sus: 63.75,
+            },
+            taskDifficulty: [
+                { task: '情境一：找到功能入口', score: 4.0 },
+                { task: '情境一：建立群組與時段', score: 5.0 },
+                { task: '情境一：設定人力需求', score: 4.3 },
+                { task: '情境一：指派員工與限制', score: 3.3 },
+                { task: '情境一：儲存設定與備註', score: 4.0 },
+                { task: '情境二：啟動 AI 排班', score: 5.0 },
+            ],
+            recommendations: [
+                { 
+                    priority: '高', 
+                    direction: '強化 AI 智慧與彈性', 
+                    details: '1. <b>學習複雜規則：</b> AI 需能處理「員工固定班別」、「一人多崗」、「主管至少一人在店」等規則。<br>2. <b>記憶使用者偏好：</b> AI 應能記住手動調整後的偏好，或提供「我的最愛」功能儲存常用設定。<br>3. <b>精準處理休假：</b> 需能區分「偏好休」、「必休」、「禁排」，並可設定全店「禁休日」。<br>4. <b>提供精細化重排：</b> 開發「指定區間/人員」的重排功能，避免全面「大洗牌」。' 
+                },
+                { 
+                    priority: '高', 
+                    direction: '優化介面與資訊呈現', 
+                    details: '1. <b>豐富班表資訊：</b> 加入清晰的群組標籤（依早中晚班或樓層分類排序）、正職/兼職標籤、總工時等統計數據。<br>2. <b>即時視覺提示：</b> 提供即時的違規視覺提示（如連續上班紅框），並在 AI 無法滿足需求時明確列出衝突點。<br>3. <b>優化指派介面：</b> 增加每頁可顯示的人員數量，並在搜尋時能顯示人員所屬群組。<br>4. <b>HTML 可直接編輯：</b> 讓下載的班表格式能直接在系統內編輯。' 
+                },
+                { 
+                    priority: '中', 
+                    direction: '改善系統流程與體驗', 
+                    details: '1. <b>建立考勤鎖定機制：</b> 提供功能鎖定已結算或確認的班表，防止被 AI 意外覆蓋。<br>2. <b>優化考勤處理：</b> 簡化加班單、請假單的申請與修改流程（如允許主管代申請）。<br>3. <b>提供進度提示與引導：</b> 在 AI 運算時提供進度提示，並為新功能提供操作引導說明。' 
+                }
+            ],
+            developmentPlan: {
+                mvp: [
+                    '<b>核心AI穩定性：</b> 確保AI在基本條件下能穩定產出班表，不會輕易崩潰或無回應。',
+                    '<b>滿足多元情境：</b> 配合目前排班系統限制，避免造成排班資料錯誤或無法產出班表結果。',
+                    '<b>多人同時操作：</b> 確保第二人以上啟用AI排班，也可順利完成排班結果。'
+                ],
+                next: [
+                    '<b>提供精細化重排：</b> 開發「指定區間/人員」的重排功能，避免全面「大洗牌」。',
+                    '<b>AI複雜規則：</b> AI 需能處理「員工固定班別」、「一人多崗」、「主管至少一人在店」等規則。',
+                    '<b>優化指派介面：</b> 增加每頁可顯示的人員數量，並在搜尋時能顯示人員所屬群組。',
+                    '<b>提供進度提示與引導：</b> 在 AI 運算時提供進度提示，並為新功能提供操作引導說明。'
+                ]
+            },
+            painPoints: [
+                { module: 'module2', title: 'AI 結果與需求落差大', detail: 'AI 未能處理「員工固定班別」的需求，排班結果隨機跳動，如同「抽盲包」，與實務需求差距甚遠。', category: 'AI 核心邏輯' },
+                { module: 'module2', title: '班表介面資訊不全', detail: 'AI 產出的班表看不到群組資訊（崗位、早中晚班），也缺乏總工時統計，導致難以判斷是否符合預期。', category: '介面資訊呈現' },
+                { module: 'module1', title: '無法跨崗位指派', detail: '「一人不能重複指派群組」的限制，不符實際工作需求（如領班兼幹部），使用者強烈期望能支援一人多崗。', category: '系統規則與彈性' },
+                { module: 'module2', title: '缺乏即時違規提示', detail: '關切 AI 產出的班表是否符合法規（如跨日需間隔11小時），並期望系統能有即時的違規提示與防呆機制。', category: '介面資訊呈現' },
+                { module: 'module1', title: '指派介面資訊不足', detail: '介面一次僅顯示三人，檢查速度慢。期望能顯示更多人，並標示「正職/兼職」方便新主管上手。', category: '介面資訊呈現' },
+                { module: 'module2', title: 'AI 互動體驗不佳', detail: 'AI 對話視窗會擋住班表畫面，影響操作。使用者期望直接輸入指令互動，並在 AI 運算時有進度提示。', category: '互動與流程' },
+                { module: 'module1', title: '功能入口不易尋找', detail: '使用者建議入口應直接顯示功能名稱，而非僅用設定圖示，以避免誤解。', category: '互動與流程' },
+                { module: 'module1', title: '缺乏人力加總統計', detail: '在設定人力需求時，希望能有統計區顯示時段加總人數，以便更清楚掌握當前人力配置。', category: '介面資訊呈現' },
+                { module: 'module2', title: '產出班表無法直接編輯', detail: 'AI 產出的 HTML 班表無法直接在系統內編輯，需下載後處理，影響效率。', category: '互動與流程' },
+                { module: 'module1', title: '備註功能不清晰', detail: '對「備註」功能的作用不太清楚，希望能有範本或提示說明，讓使用者知道備註欄位的意義，以及如何撰寫才可以讓AI理解。', category: '互動與流程' }
+            ],
+            highlights: [
+                { title: '快捷排班功能', detail: '使用者認為現行系統的快捷排班功能很好用、很方便。' },
+                { title: '可選排班策略', detail: 'AI 能根據雇主需求選擇「最低成本」、「平均工時」等不同排班策略，此功能受到肯定。' },
+                { title: '群組分類功能', detail: '認為人力需求規則設定中的群組分類功能很棒，但希望可以一人身兼多群組。' },
+                { title: '預排必休流程', detail: '先手動輸入必休再讓 AI 排班的流程，被使用者認為是可接受的工作模式。' }
+            ]
+        };
+
+        // 工具函數
+        const utils = {
+            // 防抖函數
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            },
+
+            // 安全設置innerHTML
+            safeSetInnerHTML(element, html) {
+                if (element && html) {
+                    element.innerHTML = html;
+                }
+            },
+
+            // 創建元素
+            createElement(tag, className, innerHTML) {
+                const element = document.createElement(tag);
+                if (className) element.className = className;
+                if (innerHTML) this.safeSetInnerHTML(element, innerHTML);
+                return element;
+            }
+        };
+
+        // 圖表管理類
+        class ChartManager {
+            constructor() {
+                this.charts = new Map();
+            }
+
+            // 創建SUS分數圖表
+            createSusChart() {
+                const ctx = document.getElementById('susChart')?.getContext('2d');
+                if (!ctx) return;
+
+                const chart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            data: [reportData.scores.sus, 100 - reportData.scores.sus],
+                            backgroundColor: [CONFIG.CHART_COLORS.accent, '#e5e7eb'],
+                            borderColor: ['#ffffff'],
+                            borderWidth: 2,
+                            circumference: 180,
+                            rotation: 270,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '80%',
+                        plugins: { 
+                            tooltip: { 
+                                enabled: false,
+                                callbacks: {
+                                    title: () => ''
+                                }
+                            } 
+                        }
+                    }
+                });
+
+                this.charts.set('sus', chart);
+            }
+
+            // 創建任務困難度圖表
+            createTaskDifficultyChart() {
+                const ctx = document.getElementById('taskDifficultyChart')?.getContext('2d');
+                if (!ctx) return;
+
+                const chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: reportData.taskDifficulty.map(d => d.task),
+                        datasets: [{
+                            label: '操作簡易度 (越高越簡單)',
+                            data: reportData.taskDifficulty.map(d => d.score),
+                            backgroundColor: reportData.taskDifficulty.map(d => {
+                                if (d.task.startsWith('情境一')) {
+                                    return d.score < 4 ? CONFIG.CHART_COLORS.danger : CONFIG.CHART_COLORS.success;
+                                }
+                                return d.score < 4 ? CONFIG.CHART_COLORS.danger : CONFIG.CHART_COLORS.primary;
+                            }),
+                            borderColor: reportData.taskDifficulty.map(d => {
+                                if (d.task.startsWith('情境一')) {
+                                    return d.score < 4 ? '#dc2626' : '#10b981';
+                                }
+                                return d.score < 4 ? '#dc2626' : CONFIG.CHART_COLORS.primary;
+                            }),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { 
+                                beginAtZero: true, 
+                                max: 5, 
+                                grid: { color: '#e2e8f0' } 
+                            },
+                            y: { 
+                                grid: { display: false } 
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    title: function(tooltipItems) {
+                                        const item = tooltipItems[0];
+                                        const label = item.chart.data.labels[item.dataIndex];
+                                        return Array.isArray(label) ? label.join(' ') : label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                this.charts.set('taskDifficulty', chart);
+            }
+
+            // 銷毀所有圖表
+            destroyAll() {
+                this.charts.forEach(chart => chart.destroy());
+                this.charts.clear();
+            }
+        }
+
+        // 標籤管理類
+        class TabManager {
+            constructor() {
+                this.tabButtons = document.querySelectorAll('.tab-btn');
+                this.tabContents = document.querySelectorAll('.tab-content');
+                this.init();
+            }
+
+            init() {
+                this.tabButtons.forEach(button => {
+                    button.addEventListener('click', () => this.switchTab(button));
+                });
+            }
+
+            switchTab(activeButton) {
+                // 更新按鈕狀態
+                this.tabButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.setAttribute('aria-selected', 'false');
+                });
+                activeButton.classList.add('active');
+                activeButton.setAttribute('aria-selected', 'true');
+
+                // 更新內容顯示
+                const targetId = activeButton.id.replace('btn', 'content');
+                this.tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    if (content.id === targetId) {
+                        content.classList.add('active');
+                    }
+                });
+            }
+
+            // 激活指定標籤
+            activateTab(tabId) {
+                const button = document.getElementById(`tab-btn-${tabId}`);
+                if (button) {
+                    this.switchTab(button);
+                }
+            }
+        }
+
+        // 篩選器管理類
+        class FilterManager {
+            constructor() {
+                this.filterButtons = document.querySelectorAll('.filter-btn');
+                this.init();
+            }
+
+            init() {
+                this.filterButtons.forEach(button => {
+                    button.addEventListener('click', () => this.activateFilter(button));
+                });
+            }
+
+            activateFilter(activeButton) {
+                this.filterButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                activeButton.classList.add('active');
+                
+                // 觸發篩選事件
+                const filter = activeButton.dataset.filter;
+                this.dispatchFilterEvent(filter);
+            }
+
+            dispatchFilterEvent(filter) {
+                const event = new CustomEvent('filterChanged', { detail: { filter } });
+                document.dispatchEvent(event);
+            }
+        }
+
+        // 內容渲染類
+        class ContentRenderer {
+            constructor() {
+                this.chartManager = new ChartManager();
+                this.init();
+            }
+
+            init() {
+                this.renderSusScore();
+                this.renderRecommendations();
+                this.renderDevelopmentPlan();
+                this.renderPainPoints();
+                this.renderHighlights();
+                this.createCharts();
+            }
+
+            renderSusScore() {
+                const susScoreElement = document.getElementById('susScore');
+                if (susScoreElement) {
+                    susScoreElement.textContent = reportData.scores.sus;
+                }
+            }
+
+            renderRecommendations() {
+                const tableBody = document.getElementById('recommendations-table');
+                if (!tableBody) return;
+
+                tableBody.innerHTML = '';
+                reportData.recommendations.forEach(rec => {
+                    const row = utils.createElement('tr');
+                    const priorityClass = rec.priority === '高' ? 'priority-high' : 'priority-medium';
+                    
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="priority-badge ${priorityClass}">${rec.priority}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${rec.direction}</td>
+                        <td class="px-6 py-4 text-sm text-slate-500">${rec.details}</td>`;
+                    
+                    tableBody.appendChild(row);
+                });
+            }
+
+            renderDevelopmentPlan() {
+                this.renderPlanList('#current-plan ul', reportData.developmentPlan.mvp);
+                this.renderPlanList('#next-plan ul', reportData.developmentPlan.next);
+            }
+
+            renderPlanList(selector, items) {
+                const listElement = document.querySelector(selector);
+                if (!listElement) return;
+
+                listElement.innerHTML = '';
+                items.forEach(item => {
+                    const li = utils.createElement('li');
+                    utils.safeSetInnerHTML(li, item);
+                    listElement.appendChild(li);
+                });
+            }
+
+            renderPainPoints() {
+                const container = document.getElementById('painpoints-container');
+                if (!container) return;
+
+                const renderPoints = (filter) => {
+                    container.innerHTML = '';
+                    const filteredPoints = filter === 'all' ? 
+                        reportData.painPoints : 
+                        reportData.painPoints.filter(p => p.module === filter);
+
+                    filteredPoints.forEach(point => {
+                        const card = this.createPainPointCard(point);
+                        container.appendChild(card);
+                    });
+                };
+
+                // 監聽篩選事件
+                document.addEventListener('filterChanged', (event) => {
+                    renderPoints(event.detail.filter);
+                });
+
+                // 初始渲染
+                renderPoints('all');
+            }
+
+            createPainPointCard(point) {
+                const card = utils.createElement('div', 'card p-5 h-full flex flex-col');
+                
+                const categoryColors = {
+                    'AI 核心邏輯': 'bg-red-100 text-red-800',
+                    '介面資訊呈現': 'bg-blue-100 text-blue-800',
+                    '互動與流程': 'bg-yellow-100 text-yellow-800',
+                    '系統規則與彈性': 'bg-purple-100 text-purple-800'
+                };
+
+                const categoryColor = categoryColors[point.category] || 'bg-gray-200 text-gray-800';
+
+                card.innerHTML = `
+                    <div class="flex-grow">
+                        <div class="flex items-start justify-between mb-2">
+                            <h4 class="font-bold text-md text-slate-800 pr-2">${point.title}</h4>
+                            <span class="category-badge ${categoryColor}">
+                                ${point.category}
+                            </span>
+                        </div>
+                        <p class="text-slate-600 text-sm">${point.detail}</p>
+                    </div>
+                `;
+
+                return card;
+            }
+
+            renderHighlights() {
+                const container = document.getElementById('highlights-container');
+                if (!container) return;
+
+                container.innerHTML = '';
+                reportData.highlights.forEach(highlight => {
+                    const card = utils.createElement('div', 'card bg-teal-50 p-5 border-teal-200 h-full');
+                    card.innerHTML = `
+                        <div class="mb-2">
+                            <h4 class="font-bold text-md text-teal-800">${highlight.title}</h4>
+                        </div>
+                        <p class="text-teal-700 text-sm">${highlight.detail}</p>`;
+                    container.appendChild(card);
+                });
+            }
+
+            createCharts() {
+                this.chartManager.createSusChart();
+                this.chartManager.createTaskDifficultyChart();
+            }
+        }
+
+        // 應用主類
+        class App {
+            constructor() {
+                this.tabManager = null;
+                this.filterManager = null;
+                this.contentRenderer = null;
+            }
+
+            init() {
+                try {
+                    // 初始化各個管理器
+                    this.tabManager = new TabManager();
+                    this.filterManager = new FilterManager();
+                    this.contentRenderer = new ContentRenderer();
+
+                    // 激活默認標籤
+                    this.tabManager.activateTab('overview');
+
+                    // 添加錯誤處理
+                    window.addEventListener('error', this.handleError.bind(this));
+                    window.addEventListener('unhandledrejection', this.handlePromiseError.bind(this));
+
+                    console.log('應用初始化完成');
+                } catch (error) {
+                    console.error('應用初始化失敗:', error);
+                    this.handleError(error);
+                }
+            }
+
+            handleError(error) {
+                console.error('應用錯誤:', error);
+                // 可以在這裡添加用戶友好的錯誤提示
+            }
+
+            handlePromiseError(event) {
+                console.error('Promise 錯誤:', event.reason);
+                // 可以在這裡添加用戶友好的錯誤提示
+            }
+        }
+
+        // 當DOM加載完成後初始化應用
+        document.addEventListener('DOMContentLoaded', () => {
+            const app = new App();
+            app.init();
+        });
+
+        // 頁面卸載時清理資源
+        window.addEventListener('beforeunload', () => {
+            // 清理圖表資源
+            if (window.chartManager) {
+                window.chartManager.destroyAll();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI POC 專案導航</title>
+    <style>
+      :root {
+        --bg: #0b0c10;
+        --panel: #111318;
+        --text: #e6e6e6;
+        --muted: #a9b0bb;
+        --primary: #4aa3ff;
+        --border: #1f232b;
+        --shadow: 0 6px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.02);
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+        background: linear-gradient(180deg, #0b0c10 0%, #0e1016 100%);
+        color: var(--text);
+      }
+      .wrap { max-width: 1160px; margin: 0 auto; padding: 28px 24px; }
+      header { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+      h1 { font-size: 30px; margin: 0; letter-spacing: .4px; }
+      @media (min-width: 980px) { h1 { font-size: 34px; } }
+      .sub { color: var(--muted); margin: 6px 0 0 0; font-size: 14px; }
+      .spacer { flex: 1 1 auto; }
+      .lang {
+        display: inline-flex; gap: 8px; background: var(--panel); padding: 6px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow);
+      }
+      .lang button {
+        appearance: none; border: 0; background: transparent; color: var(--text);
+        padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; letter-spacing: .2px; transition: background .2s ease, color .2s ease;
+      }
+      .lang button[aria-pressed="true"] { background: #1a2333; color: #fff; box-shadow: inset 0 0 0 1px #22304a; }
+      .lang button:focus-visible { outline: 2px solid #6fb1ff; outline-offset: 2px; border-radius: 10px; }
+      .grid {
+        display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 16px; margin-top: 22px;
+      }
+      @media (min-width: 640px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+      @media (min-width: 980px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+      .card {
+        background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: var(--shadow); transition: transform .15s ease, border-color .2s ease, background .2s ease;
+      }
+      .card:hover { transform: translateY(-2px); border-color: #2a3341; background: #131722; }
+      .card h3 { margin: 0; font-size: 16px; letter-spacing: .2px; }
+      .card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+      .card a {
+        margin-top: 10px; align-self: flex-start; color: #fff; text-decoration: none; font-weight: 700; background: linear-gradient(180deg,#1b4070 0%, #17355e 100%);
+        padding: 8px 12px; border-radius: 10px; border: 1px solid #224571; box-shadow: 0 4px 10px rgba(10,28,60,.35);
+      }
+      .card a:hover { filter: brightness(1.05); }
+      .card a:focus-visible { outline: 2px solid #6fb1ff; outline-offset: 2px; }
+      .footer { color: var(--muted); font-size: 12px; padding: 20px 0 8px; text-align: center; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div>
+          <h1 id="heading-title">AI POC 專案導航</h1>
+          <p class="sub" id="heading-sub">以下為本資料夾的重點原型與頁面。</p>
+        </div>
+        <div class="spacer"></div>
+        <nav class="lang" aria-label="Language selector">
+          <button type="button" data-lang="zh-TW" aria-pressed="true">繁中</button>
+          <button type="button" data-lang="zh-CN" aria-pressed="false">简中</button>
+          <button type="button" data-lang="en" aria-pressed="false">EN</button>
+        </nav>
+      </header>
+
+      <main>
+        <div class="grid" id="project-list" aria-live="polite"></div>
+      </main>
+
+      <div class="footer" id="footer-note">清單可依需求持續擴充與調整。</div>
+    </div>
+
+    <script>
+      // Project definitions (links are relative to this index.html)
+      const projects = [
+        { key: 'hr_core', link: './HR核心任務.html' },
+        { key: 'ux_report', link: './易用性報告.html' },
+        { key: 'feedback', link: './金豬反饋.html' },
+        { key: 'ai_partner', link: './智能夥伴.html' },
+        { key: 'scheduling', link: './排班/排班.html' },
+        { key: 'hackathon_log', link: './黑克松紀錄系統/黑克松紀錄.html' },
+      ];
+
+      // i18n dictionary
+      const dict = {
+        'zh-TW': {
+          pageTitle: 'AI POC 專案導航',
+          headingTitle: 'AI POC 專案導航',
+          headingSub: '以下為本資料夾的重點原型與頁面。',
+          footer: '清單可依需求持續擴充與調整。',
+          open: '開啟頁面',
+          items: {
+            hr_core: { title: 'HR 核心任務', desc: 'HR 核心職能、流程與重點任務。' },
+            ux_report: { title: '易用性報告', desc: '易用性研究洞見、痛點與優化建議。' },
+            feedback: { title: '金豬反饋', desc: '專案回饋彙整與後續追蹤。' },
+            ai_partner: { title: '智能夥伴', desc: 'AI 智能夥伴示範與使用範例。' },
+            scheduling: { title: '排班', desc: '人力排程、班表與規則設定。' },
+            hackathon_log: { title: '黑克松紀錄', desc: '黑客松紀錄、議程與產出。' },
+          },
+        },
+        'zh-CN': {
+          pageTitle: 'AI POC 项目导航',
+          headingTitle: 'AI POC 项目导航',
+          headingSub: '以下为本文件夹的重点原型与页面。',
+          footer: '清单可按需持续扩充与调整。',
+          open: '打开页面',
+          items: {
+            hr_core: { title: 'HR 核心任务', desc: 'HR 核心职能、流程与重点任务。' },
+            ux_report: { title: '易用性报告', desc: '易用性研究洞见、痛点与优化建议。' },
+            feedback: { title: '金猪反馈', desc: '项目反馈汇总与后续跟进。' },
+            ai_partner: { title: '智能伙伴', desc: 'AI 智能伙伴示范与使用范例。' },
+            scheduling: { title: '排班', desc: '人力排程、班表与规则设置。' },
+            hackathon_log: { title: '黑客松记录', desc: '黑客松记录、议程与产出。' },
+          },
+        },
+        'en': {
+          pageTitle: 'AI POC Project Navigation',
+          headingTitle: 'AI POC Project Navigation',
+          headingSub: 'Curated prototypes and pages in this folder.',
+          footer: 'Keep this list evolving as the work grows.',
+          open: 'Open Page',
+          items: {
+            hr_core: { title: 'HR Core Tasks', desc: 'HR capabilities, processes, and key tasks.' },
+            ux_report: { title: 'Usability Report', desc: 'Research insights, pain points, and improvements.' },
+            feedback: { title: 'Golden Pig Feedback', desc: 'Consolidated feedback and follow-ups.' },
+            ai_partner: { title: 'Smart Assistant', desc: 'AI assistant demo with sample use cases.' },
+            scheduling: { title: 'Scheduling', desc: 'Workforce rostering, shifts, and rules.' },
+            hackathon_log: { title: 'Hackathon Log', desc: 'Notes, agenda, and deliverables.' },
+          },
+        },
+      };
+
+      function normalizeLang(tag) {
+        if (!tag) return 'en';
+        const t = tag.toLowerCase();
+        if (t.startsWith('zh')) {
+          if (t.includes('hant') || t.includes('tw') || t.includes('hk') || t.includes('mo')) return 'zh-TW';
+          return 'zh-CN';
+        }
+        return 'en';
+      }
+
+      function setLang(lang) {
+        const active = dict[lang] ? lang : 'en';
+        document.documentElement.lang = active === 'zh-TW' ? 'zh-Hant' : active;
+        document.title = dict[active].pageTitle;
+        document.getElementById('heading-title').textContent = dict[active].headingTitle;
+        document.getElementById('heading-sub').textContent = dict[active].headingSub;
+        document.getElementById('footer-note').textContent = dict[active].footer;
+
+        // Toggle pressed state on language buttons
+        document.querySelectorAll('.lang button').forEach(btn => {
+          btn.setAttribute('aria-pressed', String(btn.dataset.lang === active));
+        });
+
+        // Render projects
+        const list = document.getElementById('project-list');
+        list.innerHTML = '';
+        const t = dict[active].items;
+        for (const p of projects) {
+          const meta = t[p.key];
+          if (!meta) continue; // skip unknown
+          const card = document.createElement('article');
+          card.className = 'card';
+
+          const h3 = document.createElement('h3');
+          h3.textContent = meta.title;
+          card.appendChild(h3);
+
+          const desc = document.createElement('p');
+          desc.textContent = meta.desc;
+          card.appendChild(desc);
+
+          const a = document.createElement('a');
+          a.textContent = dict[active].open;
+          a.href = encodeURI(p.link);
+          a.rel = 'noopener noreferrer';
+          a.target = '_blank';
+          card.appendChild(a);
+
+          list.appendChild(card);
+        }
+
+        localStorage.setItem('nav_lang', active);
+      }
+
+      // Init language
+      const stored = localStorage.getItem('nav_lang');
+      const initial = stored || normalizeLang(navigator.language || navigator.userLanguage);
+      setLang(initial);
+
+      // Wire language selector
+      document.querySelectorAll('.lang button').forEach(btn => {
+        btn.addEventListener('click', () => setLang(btn.dataset.lang));
+      });
+    </script>
+  </body>
+  </html>
