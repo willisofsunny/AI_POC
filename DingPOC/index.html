@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>釘釘-Apollo 員工數據集成 POC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4aa3ff;
+            --secondary: #00d4aa;
+            --accent: #ff6b6b;
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a1f2e;
+            --text: #e8eaed;
+            --text-muted: #9aa0a6;
+            --border: #2d3748;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, #2d3748 100%);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .card {
+            background: rgba(26, 31, 46, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: var(--primary);
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(74, 163, 255, 0.3);
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(74, 163, 255, 0.4);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--error) 0%, #dc2626 100%);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-active {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+        
+        .status-pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+        
+        .status-departed {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--error);
+        }
+        
+        .nav-tab {
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        
+        .nav-tab.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+        
+        .nav-tab:not(.active):hover {
+            background: rgba(74, 163, 255, 0.1);
+            border-color: var(--primary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th, .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .table th {
+            background: rgba(45, 55, 72, 0.5);
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .table tr:hover {
+            background: rgba(74, 163, 255, 0.1);
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, rgba(74, 163, 255, 0.1) 0%, rgba(0, 212, 170, 0.1) 100%);
+            border: 1px solid rgba(74, 163, 255, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        .progress-bar {
+            background: rgba(45, 55, 72, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            height: 8px;
+            margin: 8px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            transition: width 0.3s ease;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid var(--border);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(74, 163, 255, 0.3);
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen p-6">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <header class="text-center mb-8">
+                <h1 class="text-4xl font-bold gradient-text mb-4">
+                    釘釘-Apollo 員工數據集成平台
+                </h1>
+                <p class="text-lg text-gray-300">
+                    實時員工數據同步與管理系統
+                </p>
+            </header>
+
+            <!-- Navigation -->
+            <nav class="flex flex-wrap justify-center gap-4 mb-8">
+                <button class="nav-tab active" data-tab="dashboard">數據儀表板</button>
+                <button class="nav-tab" data-tab="employees">員工管理</button>
+                <button class="nav-tab" data-tab="sync">數據同步</button>
+                <button class="nav-tab" data-tab="config">API 配置</button>
+                <button class="nav-tab" data-tab="docs">API 文檔</button>
+            </nav>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active">
+                <!-- Statistics Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+                    <div class="stat-card">
+                        <div class="stat-number" id="total-count">0</div>
+                        <div class="text-gray-400">總員工數</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="active-count">0</div>
+                        <div class="text-gray-400">在職員工</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="pending-count">0</div>
+                        <div class="text-gray-400">待入職</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="departed-count">0</div>
+                        <div class="text-gray-400">離職員工</div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="grid md:grid-cols-2 gap-8 mb-8">
+                    <div class="card">
+                        <h3 class="text-xl font-bold mb-4">員工狀態分佈</h3>
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3 class="text-xl font-bold mb-4">月度入職趨勢</h3>
+                        <div class="chart-container">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="card">
+                    <h3 class="text-xl font-bold mb-4">最近同步活動</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-green-900 bg-opacity-30 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                                <span>數據同步完成</span>
+                            </div>
+                            <span class="text-sm text-gray-400">剛才</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-blue-900 bg-opacity-30 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                <span>獲取在職員工列表</span>
+                            </div>
+                            <span class="text-sm text-gray-400">2分鐘前</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-yellow-900 bg-opacity-30 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                <span>更新 API 憑證</span>
+                            </div>
+                            <span class="text-sm text-gray-400">5分鐘前</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employees Tab -->
+            <div id="employees" class="tab-content">
+                <div class="card">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                        <h3 class="text-2xl font-bold gradient-text mb-4 sm:mb-0">員工數據列表</h3>
+                        <div class="flex space-x-3">
+                            <select id="statusFilter" class="form-input w-auto">
+                                <option value="">全部狀態</option>
+                                <option value="在职">在職</option>
+                                <option value="待入职">待入職</option>
+                                <option value="离职">離職</option>
+                            </select>
+                            <button class="btn btn-success" onclick="refreshEmployees()">
+                                🔄 刷新數據
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>姓名</th>
+                                    <th>員工ID</th>
+                                    <th>部門</th>
+                                    <th>狀態</th>
+                                    <th>員工郵箱</th>
+                                    <th>入職日期</th>
+                                    
+                                </tr>
+                            </thead>
+                            <tbody id="employeeTable">
+                                <!-- Employee data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sync Tab -->
+            <div id="sync" class="tab-content">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="card">
+                        <h3 class="text-xl font-bold mb-4">數據同步控制</h3>
+                        <div class="space-y-4">
+                            <button class="btn w-full" onclick="startSync()">
+                                <span id="syncButtonText">🚀 開始數據同步</span>
+                            </button>
+                            <button class="btn btn-danger w-full" onclick="clearData()">
+                                🗑️ 清空數據
+                            </button>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <h4 class="font-bold mb-3">同步進度</h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between text-sm">
+                                    <span id="syncStatus">等待開始</span>
+                                    <span id="syncProgress">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3 class="text-xl font-bold mb-4">同步統計</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between">
+                                <span>在職員工</span>
+                                <span class="font-bold text-green-400" id="syncActiveCount">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>待入職員工</span>
+                                <span class="font-bold text-yellow-400" id="syncPendingCount">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>離職員工</span>
+                                <span class="font-bold text-red-400" id="syncDepartedCount">0</span>
+                            </div>
+                            <hr class="border-gray-600">
+                            <div class="flex justify-between text-lg font-bold">
+                                <span>總計</span>
+                                <span class="gradient-text" id="syncTotalCount">0</span>
+                            </div>
+                            <div class="text-sm text-gray-400">
+                                最後同步：
+                                <span id="lastSyncTime">—</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sync Log -->
+                <div class="card mt-8">
+                    <h3 class="text-xl font-bold mb-4">同步日誌</h3>
+                    <div class="bg-black bg-opacity-50 rounded-lg p-4 font-mono text-sm max-h-64 overflow-y-auto" id="syncLog">
+                        <div class="text-green-400">[2025-09-08 14:30:26] 🚀 开始员工数据同步...</div>
+                        <div class="text-blue-400">[2025-09-08 14:30:27] 🔑 更新钉钉API凭证...</div>
+                        <div class="text-green-400">[2025-09-08 14:30:28] ✅ API凭证已更新</div>
+                        <div class="text-blue-400">[2025-09-08 14:30:29] 👥 获取在职员工列表...</div>
+                        <div class="text-blue-400">[2025-09-08 14:30:30] ⏳ 获取待入职员工列表...</div>
+                        <div class="text-blue-400">[2025-09-08 14:30:31] 🚪 获取离职员工列表...</div>
+                        <div class="text-green-400">[2025-09-08 14:30:33] ✅ 获取到 3 名在职员工</div>
+                        <div class="text-green-400">[2025-09-08 14:30:34] ✅ 获取到 4 名待入职员工</div>
+                        <div class="text-green-400">[2025-09-08 14:30:35] ✅ 获取到 2 名离职员工</div>
+                        <div class="text-green-400">[2025-09-08 14:30:36] ✅ 成功保存 9 条员工记录</div>
+                        <div class="text-green-400">[2025-09-08 14:30:37] ✅ 数据同步完成</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Config Tab -->
+            <div id="config" class="tab-content">
+                <div class="card max-w-2xl mx-auto">
+                    <h3 class="text-2xl font-bold gradient-text mb-6">釘釘 API 配置</h3>
+                    
+                    <form id="configForm" class="space-y-6">
+                        <div class="form-group">
+                            <label class="form-label">企業 ID (Corp ID)</label>
+                            <input type="text" id="corpId" class="form-input" placeholder="請輸入企業 ID" />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Client ID</label>
+                            <input type="text" id="clientId" class="form-input" placeholder="請輸入 Client ID" />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Client Secret</label>
+                            <input type="password" id="clientSecret" class="form-input" placeholder="請輸入 Client Secret" />
+                        </div>
+                        
+                        <div class="flex space-x-4">
+                            <button type="button" class="btn btn-success flex-1" onclick="saveConfig()">
+                                💾 保存配置
+                            </button>
+                            <button type="button" class="btn flex-1" onclick="testConfig()">
+                                🧪 測試連接
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-8 p-4 bg-blue-900 bg-opacity-30 rounded-lg">
+                        <h4 class="font-bold mb-2">🔗 獲取 API 憑證步驟：</h4>
+                        <ol class="list-decimal list-inside space-y-1 text-sm">
+                            <li>訪問 <a href="https://open.dingtalk.com/" target="_blank" class="text-blue-400 hover:underline">釘釘開放平台</a></li>
+                            <li>創建企業內部應用</li>
+                            <li>獲取 AppKey 和 AppSecret</li>
+                            <li>配置應用權限（智能人事相關）</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Docs Tab (API Usage) -->
+            <div id="docs" class="tab-content">
+                <div class="card">
+                    <h3 class="text-2xl font-bold gradient-text mb-4">API 使用流程圖</h3>
+                    <div class="w-full overflow-x-auto">
+                        <svg viewBox="0 0 1280 560" width="100%" height="460" role="img" aria-label="API 使用流程圖">
+                            <defs>
+                                <linearGradient id="gPrimary" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0%" stop-color="#4aa3ff"/>
+                                    <stop offset="100%" stop-color="#00d4aa"/>
+                                </linearGradient>
+                                <linearGradient id="gFallback" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0%" stop-color="#ff6b6b"/>
+                                    <stop offset="100%" stop-color="#ff9e9e"/>
+                                </linearGradient>
+                                <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                                    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.35"/>
+                                </filter>
+                                <marker id="arrowHead" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+                                    <path d="M0,0 L10,4 L0,8 Z" fill="#4aa3ff"></path>
+                                </marker>
+                                <style>
+                                    .lane { fill:#151b28; stroke:#2d3748; }
+                                    .node { fill:#0f1625; stroke:url(#gPrimary); stroke-width:1.6; filter:url(#shadow); }
+                                    .node--fallback { stroke:url(#gFallback); }
+                                    .label { font:600 14px 'Noto Sans TC', system-ui, -apple-system; fill:#e8eaed; }
+                                    .sublabel { font:12px 'Noto Sans TC', system-ui, -apple-system; fill:#9aa0a6; }
+                                    .badge { fill:url(#gPrimary); }
+                                    .badge text { font:700 12px 'Noto Sans TC'; fill:#00111a; }
+                                    .legend text { font:12px 'Noto Sans TC'; fill:#9aa0a6; }
+                                </style>
+                            </defs>
+
+                            <!-- lanes -->
+                            <rect class="lane" x="20" y="20" width="1240" height="90" rx="10"></rect>
+                            <text x="28" y="50" class="label" style="fill:#9aa0a6;font-weight:700;">認證</text>
+
+                            <rect class="lane" x="20" y="120" width="1240" height="110" rx="10"></rect>
+                            <text x="28" y="150" class="label" style="fill:#9aa0a6;font-weight:700;">人員 ID 拉取</text>
+
+                            <rect class="lane" x="20" y="240" width="1240" height="110" rx="10"></rect>
+                            <text x="28" y="270" class="label" style="fill:#9aa0a6;font-weight:700;">花名冊字段（批量）與回退補齊</text>
+
+                            <rect class="lane" x="20" y="360" width="1240" height="160" rx="10"></rect>
+                            <text x="28" y="390" class="label" style="fill:#9aa0a6;font-weight:700;">ETL 與持久化/前端使用</text>
+
+                            <!-- nodes -->
+                            <!-- auth -->
+                            <rect class="node" x="120" y="44" width="350" height="50" rx="10"></rect>
+                            <circle class="badge" cx="130" cy="52" r="12"/>
+                            <text x="130" y="56" text-anchor="middle">1</text>
+                            <text x="295" y="72" text-anchor="middle" class="label">POST /v1.0/oauth2/{corpId}/token</text>
+                            <text x="295" y="92" text-anchor="middle" class="sublabel">取得 access_token（後端快取）</text>
+
+                            <!-- id queries -->
+                            <rect class="node" x="80" y="164" width="320" height="56" rx="10"></rect>
+                            <circle class="badge" cx="90" cy="172" r="11"/>
+                            <text x="90" y="176" text-anchor="middle">2</text>
+                            <text x="240" y="190" text-anchor="middle" class="label">在職：queryonjob</text>
+
+                            <rect class="node" x="480" y="164" width="320" height="56" rx="10"></rect>
+                            <circle class="badge" cx="490" cy="172" r="11"/>
+                            <text x="490" y="176" text-anchor="middle">3</text>
+                            <text x="640" y="190" text-anchor="middle" class="label">待入職：querypreentry</text>
+
+                            <rect class="node" x="880" y="164" width="320" height="56" rx="10"></rect>
+                            <circle class="badge" cx="890" cy="172" r="11"/>
+                            <text x="890" y="176" text-anchor="middle">4</text>
+                            <text x="1040" y="190" text-anchor="middle" class="label">離職：dismissions</text>
+
+                            <!-- roster v2 -->
+                            <rect class="node" x="140" y="264" width="460" height="56" rx="10"></rect>
+                            <circle class="badge" cx="150" cy="272" r="11"/>
+                            <text x="150" y="276" text-anchor="middle">5</text>
+                            <text x="370" y="290" text-anchor="middle" class="label">POST /topapi/.../employee/v2/list</text>
+                            <text x="370" y="310" text-anchor="middle" class="sublabel">userid_list + field_filter_list（≤100）</text>
+
+                            <!-- fallbacks -->
+                            <rect class="node node--fallback" x="650" y="246" width="270" height="40" rx="8"></rect>
+                            <text x="785" y="271" text-anchor="middle" class="sublabel">回退 1：/topapi/.../employee/list（sys00-*）</text>
+
+                            <rect class="node node--fallback" x="650" y="296" width="270" height="40" rx="8"></rect>
+                            <text x="785" y="321" text-anchor="middle" class="sublabel">回退 2：/topapi/v2/user/get（dept_id_list）</text>
+
+                            <!-- etl & store -->
+                            <rect class="node" x="120" y="412" width="300" height="60" rx="10"></rect>
+                            <circle class="badge" cx="130" cy="420" r="11"/>
+                            <text x="130" y="424" text-anchor="middle">6</text>
+                            <text x="270" y="440" text-anchor="middle" class="label">ETL 清洗與合併字段</text>
+
+                            <rect class="node" x="460" y="412" width="260" height="60" rx="10"></rect>
+                            <text x="590" y="440" text-anchor="middle" class="label">SQLite 持久化</text>
+
+                            <rect class="node" x="760" y="412" width="360" height="60" rx="10"></rect>
+                            <text x="940" y="438" text-anchor="middle" class="label">前端 AJAX</text>
+                            <text x="940" y="458" text-anchor="middle" class="sublabel">GET /api/employees ・ POST /api/sync-employees</text>
+
+                            <!-- lines -->
+                            <g stroke="#4aa3ff" stroke-width="2" fill="none" marker-end="url(#arrowHead)">
+                                <!-- auth -> three id queries -->
+                                <path d="M295,94 L295,164"></path>
+                                <path d="M295,94 C295,130 640,120 640,164"></path>
+                                <path d="M295,94 C295,120 1040,120 1040,164"></path>
+
+                                <!-- three -> roster v2 -->
+                                <path d="M240,220 L240,264"></path>
+                                <path d="M640,220 C640,240 500,240 500,264"></path>
+                                <path d="M1040,220 C1040,240 500,240 500,264"></path>
+
+                                <!-- roster -> etl -->
+                                <path d="M370,320 C370,360 270,360 270,412"></path>
+
+                                <!-- fallbacks -> etl (dashed) -->
+                                <path d="M785,286 C785,300 700,360 420,412" stroke-dasharray="6 5"></path>
+                                <path d="M785,336 C785,340 720,380 420,412" stroke-dasharray="6 5"></path>
+
+                                <!-- etl -> db -> frontend -->
+                                <path d="M420,442 L460,442"></path>
+                                <path d="M720,442 L760,442"></path>
+                            </g>
+
+                            <!-- legend -->
+                            <g class="legend">
+                                <rect x="22" y="528" width="16" height="10" fill="url(#gPrimary)"/>
+                                <text x="42" y="536">主流程</text>
+                                <rect x="110" y="528" width="16" height="10" fill="url(#gFallback)"/>
+                                <text x="130" y="536">回退補齊</text>
+                                <circle cx="210" cy="533" r="6" fill="url(#gPrimary)"/>
+                                <text x="222" y="536">步驟編號</text>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 class="text-2xl font-bold gradient-text mb-2">API 使用文檔</h3>
+                    <p class="text-gray-300 mb-4">參考原動態頁面內容，整理本 POC 使用到的釘釘智能人事 API 與後端接口，包含請求方式、參數與調用示例。</p>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-bold mb-2">資料流程概要</h4>
+                            <ul class="list-disc list-inside space-y-1 text-sm text-gray-300">
+                                <li>後端以 <code>corpId + clientId + clientSecret</code> 取得 Access Token 並快取。</li>
+                                <li>拉取三類人員 ID：在職、待入職、離職。</li>
+                                <li>批量花名冊 API 取得核心字段（姓名、郵箱、主部門、入職日期等）。</li>
+                                <li>必要時回退舊版花名冊與 <code>user/get</code> 補齊缺失字段。</li>
+                                <li>ETL 清洗後存入 SQLite，前端透過 AJAX 顯示。</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold mb-2">後端接口（本 POC）</h4>
+                            <ul class="list-disc list-inside space-y-1 text-sm text-gray-300">
+                                <li><code>GET /health</code> 健康檢查</li>
+                                <li><code>GET /api/employees</code> 取得員工清單</li>
+                                <li><code>POST /api/sync-employees</code> 觸發同步（需 <code>corpId/clientId/clientSecret</code>）</li>
+                                <li><code>DELETE /api/employees</code> 清空本地資料（測試用）</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8 mt-8">
+                    <div class="card">
+                        <h3 class="text-xl font-bold mb-4">🔑 認證（Access Token）</h3>
+                        <div class="text-sm text-gray-300 space-y-2">
+                            <div><b>方法：</b>POST</div>
+                            <div><b>URL：</b><code>https://api.dingtalk.com/v1.0/oauth2/{corpId}/token</code></div>
+                            <div><b>Body：</b><code>client_id</code>、<code>client_secret</code>、<code>grant_type=client_credentials</code></div>
+                            <div><b>回應：</b><code>access_token</code>、<code>expires_in</code>（過期前 5 分鐘自動刷新）</div>
+                        </div>
+                        <h4 class="font-bold mt-4 mb-2">cURL</h4>
+                        <pre class="bg-black bg-opacity-50 rounded-lg p-3 text-xs overflow-auto">curl -X POST \
+  'https://api.dingtalk.com/v1.0/oauth2/{corpId}/token' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "client_id": "&lt;CLIENT_ID&gt;",
+  "client_secret": "&lt;CLIENT_SECRET&gt;",
+  "grant_type": "client_credentials"
+}'</pre>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="text-xl font-bold mb-4">👥 人員 ID 拉取</h3>
+                        <div class="text-sm text-gray-300 space-y-2">
+                            <div><b>在職：</b>POST <code>/topapi/smartwork/hrm/employee/queryonjob</code></div>
+                            <div><b>待入職：</b>POST <code>/topapi/smartwork/hrm/employee/querypreentry</code></div>
+                            <div><b>離職：</b>GET <code>/v1.0/hrm/employees/dismissions</code></div>
+                            <div class="text-gray-400">皆支援分頁；先收集所有 <code>userid</code>，再批量查花名冊字段。</div>
+                        </div>
+                        <h4 class="font-bold mt-4 mb-2">cURL</h4>
+                        <pre class="bg-black bg-opacity-50 rounded-lg p-3 text-xs overflow-auto"># 待入職
+curl -X POST \
+  'https://oapi.dingtalk.com/topapi/smartwork/hrm/employee/querypreentry?access_token=&lt;ACCESS_TOKEN&gt;' \
+  -H 'Content-Type: application/json' \
+  -d '{"offset":0,"size":50}'
+
+# 離職
+curl -G \
+  'https://api.dingtalk.com/v1.0/hrm/employees/dismissions' \
+  --data-urlencode 'nextToken=0' \
+  --data-urlencode 'maxResults=50' \
+  -H 'x-acs-dingtalk-access-token: &lt;ACCESS_TOKEN&gt;'</pre>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="text-xl font-bold mb-4">📒 花名冊字段（批量）</h3>
+                        <div class="text-sm text-gray-300 space-y-2">
+                            <div><b>方法：</b>POST</div>
+                            <div><b>URL：</b><code>/topapi/smartwork/hrm/employee/v2/list</code></div>
+                            <div><b>Body：</b><code>userid_list</code>（≤100）、<code>field_filter_list</code>（可選，≤100；未傳為全部）、<code>agentid</code></div>
+                            <div><b>重點字段：</b>姓名、郵箱、主部門ID/名稱、職位/職級、<b>入職日期</b></div>
+                            <div class="text-gray-400">入職日期可來自 <code>sys01-hiredDate</code>、<code>sys01-entryTime</code> 或字段名「入職日期/入職時間」；前端顯示為 YYYY-MM-DD。</div>
+                        </div>
+                        <h4 class="font-bold mt-4 mb-2">cURL</h4>
+                        <pre class="bg-black bg-opacity-50 rounded-lg p-3 text-xs overflow-auto">curl -X POST \
+  'https://oapi.dingtalk.com/topapi/smartwork/hrm/employee/v2/list?access_token=&lt;ACCESS_TOKEN&gt;' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "userid_list": "10001,10002,10003",
+  "field_filter_list": "sys01-name,sys01-email,sys01-mainDept,sys01-mainDeptName,sys01-hiredDate",
+  "agentid": 1
+}'</pre>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="text-xl font-bold mb-4">🧩 缺失字段補齊</h3>
+                        <div class="text-sm text-gray-300 space-y-2">
+                            <div>若 v2 花名冊缺少關鍵字段（如主部門/入職日期），會回退：</div>
+                            <ul class="list-disc list-inside space-y-1 ml-2">
+                                <li>舊版花名冊：POST <code>/topapi/smartwork/hrm/employee/list</code>（取 <code>sys00-*</code>）</li>
+                                <li>用戶詳情：POST <code>/topapi/v2/user/get</code>（補 <code>dept_id_list[0]</code>）</li>
+                            </ul>
+                            <div class="text-gray-400">並發 + 分片與指數回退重試，最終合併字段到單一用戶。</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-8">
+                    <h3 class="text-xl font-bold mb-2">📚 倉庫內原始文檔</h3>
+                    <ul class="list-disc list-inside text-sm text-blue-300">
+                        <li><a class="hover:underline" href="./API文檔/获取在职员工列表.md" target="_blank">获取在职员工列表.md</a></li>
+                        <li><a class="hover:underline" href="./API文檔/获取待入职员工列表.md" target="_blank">获取待入职员工列表.md</a></li>
+                        <li><a class="hover:underline" href="./API文檔/获取离职员工列表.md" target="_blank">获取离职员工列表.md</a></li>
+                        <li><a class="hover:underline" href="./API文檔/获取员工花名册字段信息.md" target="_blank">获取员工花名册字段信息.md</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Script: AJAX to backend API -->
+    <script>
+        // Backend API configuration
+        const API_BASE_URL = 'http://localhost:8000';
+        
+        // Employee data will be loaded from API
+        let employeeData = [];
+        let filteredEmployees = [];
+
+        // Chart instances (to avoid duplicate init errors)
+        let charts = { status: null, trend: null };
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initTabs();
+            loadEmployeeData();
+            initStatusFilter();
+        });
+
+        // Tab functionality
+        function initTabs() {
+            const tabs = document.querySelectorAll('.nav-tab');
+            const contents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const targetTab = this.dataset.tab;
+                    
+                    tabs.forEach(t => t.classList.remove('active'));
+                    contents.forEach(c => c.classList.remove('active'));
+                    
+                    this.classList.add('active');
+                    document.getElementById(targetTab).classList.add('active');
+                });
+            });
+        }
+
+        // Date parsing helpers
+        function parseDateLoose(value) {
+            if (!value) return null;
+            if (value instanceof Date) return value;
+            if (typeof value === 'number') {
+                const d = new Date(value);
+                return isNaN(d.getTime()) ? null : d;
+            }
+            if (typeof value === 'string') {
+                let s = value.trim();
+                if (!s) return null;
+                // Normalize common formats: 'YYYY-MM-DD HH:mm:ss' -> 'YYYY-MM-DDTHH:mm:ss'
+                if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/.test(s)) {
+                    s = s.replace(' ', 'T');
+                }
+                // Replace '/' with '-' to help Date parse
+                if (s.includes('/')) s = s.replace(/\//g, '-');
+                const d = new Date(s);
+                return isNaN(d.getTime()) ? null : d;
+            }
+            return null;
+        }
+
+        function buildMonthlyTrend(employees, months = 6) {
+            const now = new Date();
+            const labels = [];
+            const data = [];
+            for (let i = months - 1; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                labels.push(`${d.getMonth() + 1}月`);
+                data.push(0);
+            }
+            employees.forEach(emp => {
+                const dt = parseDateLoose(emp.joinDate);
+                if (!dt) return;
+                const diffMonths = (now.getFullYear() - dt.getFullYear()) * 12 + (now.getMonth() - dt.getMonth());
+                if (diffMonths >= 0 && diffMonths < months) {
+                    data[months - 1 - diffMonths] += 1;
+                }
+            });
+            return { labels, data };
+        }
+
+        // Initialize charts
+        function initCharts() {
+            const activeCount = employeeData.filter(emp => emp.status === '在职').length;
+            const pendingCount = employeeData.filter(emp => emp.status === '待入职').length;
+            const departedCount = employeeData.filter(emp => emp.status === '离职').length;
+            
+            // Status distribution chart
+            const statusCanvas = document.getElementById('statusChart');
+            if (!statusCanvas) return;
+            const statusCtx = statusCanvas.getContext('2d');
+            if (charts.status) { try { charts.status.destroy(); } catch (_) {} }
+            charts.status = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['在職', '待入職', '離職'],
+                    datasets: [{
+                        data: [activeCount, pendingCount, departedCount],
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e8eaed' }
+                        }
+                    }
+                }
+            });
+
+            // Trend chart from actual join dates in last 6 months
+            const trendCanvas = document.getElementById('trendChart');
+            if (!trendCanvas) return;
+            const trendCtx = trendCanvas.getContext('2d');
+            if (charts.trend) { try { charts.trend.destroy(); } catch (_) {} }
+            const trendSeries = buildMonthlyTrend(employeeData, 6);
+            charts.trend = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: trendSeries.labels,
+                    datasets: [{
+                        label: '入職人數',
+                        data: trendSeries.data,
+                        borderColor: '#4aa3ff',
+                        backgroundColor: 'rgba(74, 163, 255, 0.1)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e8eaed' }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            ticks: { color: '#9aa0a6' },
+                            grid: { color: '#2d3748' }
+                        },
+                        y: { 
+                            ticks: { color: '#9aa0a6' },
+                            grid: { color: '#2d3748' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function formatDateDisplay(val) {
+            const d = parseDateLoose(val);
+            if (!d) return val || 'N/A';
+            // YYYY-MM-DD
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        // Normalize backend employee to UI shape
+        function normalizeEmployee(emp) {
+            return {
+                userid: emp.userid || emp.id || '',
+                name: emp.name || '',
+                department: emp.departmentName || emp.department || '',
+                email: emp.email || '',
+                status: emp.status || '',
+                joinDate: emp.hiredDate || emp.hired_date || emp.joinDate || '',
+                updateTime: emp.updatedAt || emp.updateTime || emp.updated_at || ''
+            };
+        }
+
+        // Load employee data from backend API
+        async function loadEmployeeData() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/employees`);
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    employeeData = Array.isArray(result.data) ? result.data.map(normalizeEmployee) : [];
+                    filteredEmployees = [...employeeData];
+                    updateDashboardStats();
+                    initCharts();
+                    renderEmployeeTable();
+                    
+                    // Update last sync time if available
+                    const lastSync = result.timestamp || new Date().toISOString();
+                    document.getElementById('lastSyncTime').textContent = formatTimestamp(lastSync);
+                } else {
+                    console.warn('Failed to load employee data:', result);
+                    // Fallback to empty state
+                    employeeData = [];
+                    filteredEmployees = [];
+                    renderEmployeeTable();
+                }
+            } catch (error) {
+                console.error('Error loading employee data:', error);
+                // Show error message
+                const tbody = document.getElementById('employeeTable');
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-red-400">無法連接到後端服務器，請確認服務器已啟動</td></tr>';
+            }
+        }
+        
+        // Update dashboard statistics
+        function updateDashboardStats() {
+            const activeCount = employeeData.filter(emp => emp.status === '在职').length;
+            const pendingCount = employeeData.filter(emp => emp.status === '待入职').length;
+            const departedCount = employeeData.filter(emp => emp.status === '离职').length;
+            
+            document.getElementById('total-count').textContent = employeeData.length;
+            document.getElementById('active-count').textContent = activeCount;
+            document.getElementById('pending-count').textContent = pendingCount;
+            document.getElementById('departed-count').textContent = departedCount;
+            
+            document.getElementById('syncActiveCount').textContent = activeCount;
+            document.getElementById('syncPendingCount').textContent = pendingCount;
+            document.getElementById('syncDepartedCount').textContent = departedCount;
+            document.getElementById('syncTotalCount').textContent = employeeData.length;
+        }
+        
+        // Format timestamp for display
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString('zh-TW');
+        }
+        
+        // Render employee table
+        function renderEmployeeTable() {
+            const tbody = document.getElementById('employeeTable');
+            tbody.innerHTML = '';
+            
+            if (filteredEmployees.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-400">暫無數據</td></tr>';
+                return;
+            }
+            
+            filteredEmployees.forEach(employee => {
+                const row = document.createElement('tr');
+                const statusClass = employee.status === '在职' ? 'status-active' : 
+                                   employee.status === '待入职' ? 'status-pending' : 'status-departed';
+                
+                row.innerHTML = `
+                    <td>${employee.name || 'N/A'}</td>
+                    <td><code>${employee.userid || 'N/A'}</code></td>
+                    <td>${employee.department || 'N/A'}</td>
+                    <td><span class="status-badge ${statusClass}">${employee.status || 'N/A'}</span></td>
+                    <td>${employee.email ? `<a href="mailto:${employee.email}" class="text-blue-400 hover:underline">${employee.email}</a>` : 'N/A'}</td>
+                    <td>${formatDateDisplay(employee.joinDate)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Status filter
+        function initStatusFilter() {
+            const filter = document.getElementById('statusFilter');
+            filter.addEventListener('change', function() {
+                const status = this.value;
+                if (status) {
+                    filteredEmployees = employeeData.filter(emp => emp.status === status);
+                } else {
+                    filteredEmployees = [...employeeData];
+                }
+                renderEmployeeTable();
+            });
+        }
+
+        // Real sync function that calls backend API
+        async function startSync() {
+            const button = document.getElementById('syncButtonText');
+            const status = document.getElementById('syncStatus');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('syncProgress');
+            
+            button.innerHTML = '<span class="loading-spinner"></span> 同步中...';
+            status.textContent = '準備同步...';
+            
+            // Get saved API configuration
+            const savedConfig = localStorage.getItem('dingtalk-config');
+            if (!savedConfig) {
+                alert('請先配置釘釘 API 信息！');
+                button.innerHTML = '🚀 開始數據同步';
+                status.textContent = '等待開始';
+                return;
+            }
+            
+            try {
+                const config = JSON.parse(savedConfig);
+                
+                // Simulate progress updates
+                let progress = 0;
+                const updateProgress = (newProgress, statusText) => {
+                    progress = newProgress;
+                    progressFill.style.width = progress + '%';
+                    progressText.textContent = progress + '%';
+                    status.textContent = statusText;
+                };
+                
+                updateProgress(20, '發送同步請求...');
+                
+                // Call backend sync API
+                const response = await fetch(`${API_BASE_URL}/api/sync-employees`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        corpId: config.corpId,
+                        clientId: config.clientId,
+                        clientSecret: config.clientSecret
+                    })
+                });
+                
+                updateProgress(70, '處理回應數據...');
+                
+                const result = await response.json();
+                
+                updateProgress(90, '更新本地數據...');
+                
+                if (result.success) {
+                    updateProgress(100, '同步完成');
+                    
+                    // Reload employee data
+                    await loadEmployeeData();
+                    
+                    // Add success log entry
+                    const log = document.getElementById('syncLog');
+                    const now = new Date().toLocaleString('zh-TW');
+                    log.innerHTML += `<div class="text-green-400">[${now}] ✅ 同步成功，共處理 ${result.data.totalProcessed} 條記錄</div>`;
+                    log.scrollTop = log.scrollHeight;
+                    
+                } else {
+                    throw new Error(result.message || '同步失敗');
+                }
+                
+            } catch (error) {
+                console.error('Sync error:', error);
+                
+                // Show error
+                status.textContent = '同步失敗';
+                progressFill.style.width = '0%';
+                progressText.textContent = '0%';
+                
+                // Add error log entry
+                const log = document.getElementById('syncLog');
+                const now = new Date().toLocaleString('zh-TW');
+                log.innerHTML += `<div class="text-red-400">[${now}] ❌ 同步失敗：${error.message}</div>`;
+                log.scrollTop = log.scrollHeight;
+                
+                alert('同步失敗：' + error.message);
+            } finally {
+                button.innerHTML = '🚀 開始數據同步';
+            }
+        }
+
+        async function clearData() {
+            if (confirm('確定要清空所有員工數據嗎？此操作無法撤銷。')) {
+                try {
+                    // Call backend clear API
+                    const response = await fetch(`${API_BASE_URL}/api/employees`, {
+                        method: 'DELETE'
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // Reload data to reflect changes
+                        await loadEmployeeData();
+                        
+                        const log = document.getElementById('syncLog');
+                        const now = new Date().toLocaleString('zh-TW');
+                        log.innerHTML += `<div class="text-red-400">[${now}] 🗑️ 已清空所有員工數據</div>`;
+                        log.scrollTop = log.scrollHeight;
+                    } else {
+                        throw new Error(result.message || '清空失敗');
+                    }
+                    
+                } catch (error) {
+                    console.error('Clear error:', error);
+                    alert('清空數據失敗：' + error.message);
+                }
+            }
+        }
+
+        async function refreshEmployees() {
+            // Reload data from backend
+            await loadEmployeeData();
+            
+            const log = document.getElementById('syncLog');
+            const now = new Date().toLocaleString('zh-TW');
+            log.innerHTML += `<div class="text-blue-400">[${now}] 🔄 刷新員工數據列表</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function saveConfig() {
+            const corpId = document.getElementById('corpId').value;
+            const clientId = document.getElementById('clientId').value;
+            const clientSecret = document.getElementById('clientSecret').value;
+            
+            if (!corpId || !clientId || !clientSecret) {
+                alert('請填寫完整的 API 配置信息！');
+                return;
+            }
+            
+            // Save to localStorage (in real app, would save to backend)
+            localStorage.setItem('dingtalk-config', JSON.stringify({
+                corpId, clientId, clientSecret
+            }));
+            
+            alert('API 配置已保存！');
+        }
+
+        async function testConfig() {
+            const corpId = document.getElementById('corpId').value;
+            const clientId = document.getElementById('clientId').value;
+            const clientSecret = document.getElementById('clientSecret').value;
+            
+            if (!corpId || !clientId || !clientSecret) {
+                alert('請先填寫完整的 API 配置信息！');
+                return;
+            }
+            
+            try {
+                // Test backend health first
+                const healthResponse = await fetch(`${API_BASE_URL}/health`);
+                const healthResult = await healthResponse.json();
+                
+                if (healthResult.status === 'ok') {
+                    alert('API 連接測試成功！✅\n後端服務器正常運行');
+                } else {
+                    throw new Error('後端服務器回應異常');
+                }
+            } catch (error) {
+                console.error('Config test error:', error);
+                alert('API 連接測試失敗：' + error.message);
+            }
+        }
+
+        // Load saved config on page load
+        window.addEventListener('load', function() {
+            const savedConfig = localStorage.getItem('dingtalk-config');
+            if (savedConfig) {
+                const config = JSON.parse(savedConfig);
+                document.getElementById('corpId').value = config.corpId || '';
+                document.getElementById('clientId').value = config.clientId || '';
+                document.getElementById('clientSecret').value = config.clientSecret || '';
+            }
+        });
+    </script>
+</body>
+</html>
