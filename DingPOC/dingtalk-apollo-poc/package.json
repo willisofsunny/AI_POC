@@ -1,0 +1,23 @@
+{
+  "name": "dingtalk-apollo-poc",
+  "version": "1.0.0",
+  "description": "钉钉员工数据集成Apollo系统POC",
+  "main": "index.js",
+  "scripts": {
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start",
+    "dev:all": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "stop": "bash scripts/stop-ports.sh",
+    "restart:all": "bash scripts/stop-ports.sh && npm run dev:all",
+    "clean:frontend-cache": "cd frontend && rm -rf node_modules/.cache || true",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "build": "cd frontend && npm run build",
+    "test": "cd backend && npm test",
+    "health": "node scripts/health-check.js"
+  },
+  "dependencies": {
+    "concurrently": "^7.6.0"
+  },
+  "author": "John (PM Agent)",
+  "license": "MIT"
+}

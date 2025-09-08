@@ -6,26 +6,53 @@
     <title>AI POC 專案導航</title>
     <style>
       :root {
-        --bg: #0b0c10;
-        --panel: #111318;
-        --text: #e6e6e6;
-        --muted: #a9b0bb;
+        --bg: #0f1419;
+        --panel: #1a1f2e;
+        --text: #e8eaed;
+        --muted: #9aa0a6;
         --primary: #4aa3ff;
-        --border: #1f232b;
-        --shadow: 0 6px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.02);
+        --secondary: #00d4aa;
+        --accent: #ff6b6b;
+        --border: #2d3748;
+        --shadow: 0 8px 32px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05);
+        --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       }
       * { box-sizing: border-box; }
       html, body { height: 100%; }
       body {
         margin: 0;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-        background: linear-gradient(180deg, #0b0c10 0%, #0e1016 100%);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 50%, #2d3748 100%);
         color: var(--text);
+        min-height: 100vh;
+        position: relative;
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: radial-gradient(circle at 25% 25%, rgba(74, 163, 255, 0.1) 0%, transparent 50%),
+                          radial-gradient(circle at 75% 75%, rgba(0, 212, 170, 0.1) 0%, transparent 50%);
+        pointer-events: none;
+        z-index: -1;
       }
       .wrap { max-width: 1160px; margin: 0 auto; padding: 28px 24px; }
       header { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
-      h1 { font-size: 30px; margin: 0; letter-spacing: .4px; }
-      @media (min-width: 980px) { h1 { font-size: 34px; } }
+      h1 {
+        font-size: 36px;
+        margin: 0;
+        font-weight: 800;
+        letter-spacing: .5px;
+        background: linear-gradient(135deg, var(--text) 0%, var(--primary) 50%, var(--secondary) 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      }
+      @media (min-width: 980px) { h1 { font-size: 42px; } }
       .sub { color: var(--muted); margin: 6px 0 0 0; font-size: 14px; }
       .spacer { flex: 1 1 auto; }
       .lang {
@@ -43,18 +70,193 @@
       @media (min-width: 640px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (min-width: 980px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
       .card {
-        background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: var(--shadow); transition: transform .15s ease, border-color .2s ease, background .2s ease;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        box-shadow: var(--shadow);
+        transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
       }
-      .card:hover { transform: translateY(-2px); border-color: #2a3341; background: #131722; }
-      .card h3 { margin: 0; font-size: 16px; letter-spacing: .2px; }
-      .card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+      .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--gradient);
+        opacity: 0;
+        transition: opacity .3s ease;
+      }
+      .card:hover {
+        transform: translateY(-8px) scale(1.02);
+        border-color: var(--primary);
+        background: linear-gradient(145deg, #1e2537 0%, #252b3d 100%);
+        box-shadow: 0 16px 48px rgba(0,0,0,.4), inset 0 2px 0 rgba(255,255,255,.08);
+      }
+      .card:hover::before {
+        opacity: 1;
+      }
+      .card h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: .3px;
+        background: linear-gradient(135deg, var(--text) 0%, var(--primary) 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.6;
+        flex: 1;
+      }
       .card a {
-        margin-top: 10px; align-self: flex-start; color: #fff; text-decoration: none; font-weight: 700; background: linear-gradient(180deg,#1b4070 0%, #17355e 100%);
-        padding: 8px 12px; border-radius: 10px; border: 1px solid #224571; box-shadow: 0 4px 10px rgba(10,28,60,.35);
+        margin-top: auto;
+        padding: 12px 20px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        color: white;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 6px 20px rgba(74, 163, 255, 0.3);
+        transition: all .3s ease;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
       }
-      .card a:hover { filter: brightness(1.05); }
+      .card a::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left .5s ease;
+      }
+      .card a:hover::before {
+        left: 100%;
+      }
+      .card a:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(74, 163, 255, 0.4);
+        filter: brightness(1.1);
+      }
       .card a:focus-visible { outline: 2px solid #6fb1ff; outline-offset: 2px; }
       .footer { color: var(--muted); font-size: 12px; padding: 20px 0 8px; text-align: center; }
+      
+      /* 版權聲明樣式 */
+      .copyright-section {
+        margin-top: 40px;
+        padding: 32px 0 24px;
+        background: linear-gradient(135deg, var(--panel) 0%, #1e2537 100%);
+        border-top: 1px solid var(--border);
+        border-radius: 20px 20px 0 0;
+        position: relative;
+      }
+      .copyright-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--gradient);
+        opacity: 0.8;
+      }
+      .copyright-container {
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      .copyright-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+      .copyright-left {
+        flex: 1;
+        min-width: 280px;
+      }
+      .copyright-text {
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0 0 6px 0;
+        letter-spacing: 0.3px;
+      }
+      .copyright-subtext {
+        color: var(--muted);
+        font-size: 12px;
+        margin: 0;
+        opacity: 0.9;
+      }
+      .copyright-right {
+        display: flex;
+        align-items: center;
+      }
+      .tech-badges {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .tech-badge {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(74, 163, 255, 0.3);
+        transition: all 0.3s ease;
+      }
+      .tech-badge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(74, 163, 255, 0.4);
+      }
+      .copyright-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, var(--border) 50%, transparent 100%);
+        margin: 20px 0 16px;
+        opacity: 0.6;
+      }
+      .copyright-footer {
+        text-align: center;
+      }
+      .version-info {
+        color: var(--muted);
+        font-size: 11px;
+        margin: 0;
+        opacity: 0.8;
+        font-weight: 500;
+      }
+      
+      @media (max-width: 768px) {
+        .copyright-content {
+          flex-direction: column;
+          text-align: center;
+        }
+        .copyright-left {
+          min-width: auto;
+        }
+        .tech-badges {
+          justify-content: center;
+        }
+      }
     </style>
   </head>
   <body>
@@ -77,6 +279,30 @@
       </main>
 
       <div class="footer" id="footer-note">清單可依需求持續擴充與調整。</div>
+      
+      <!-- 版權聲明區塊 -->
+      <footer class="copyright-section">
+        <div class="copyright-container">
+          <div class="copyright-content">
+            <div class="copyright-left">
+              <p class="copyright-text">© 2025 AI POC 專案導航平台. 保留所有權利.</p>
+              <p class="copyright-subtext" id="copyright-desc">次世代 AI 人力資源管理原型與概念驗證平台</p>
+            </div>
+            <div class="copyright-right">
+              <div class="tech-badges">
+                <span class="tech-badge">AI</span>
+                <span class="tech-badge">React</span>
+                <span class="tech-badge">Node.js</span>
+                <span class="tech-badge">TailwindCSS</span>
+              </div>
+            </div>
+          </div>
+          <div class="copyright-divider"></div>
+          <div class="copyright-footer">
+            <p class="version-info" id="version-info">版本 v1.0.0 | 最後更新: 2025年9月8日</p>
+          </div>
+        </div>
+      </footer>
     </div>
 
     <script>
@@ -88,6 +314,7 @@
         { key: 'ai_partner', link: './智能夥伴.html' },
         { key: 'scheduling', link: './排班/排班.html' },
         { key: 'hackathon_log', link: './黑克松紀錄系統/黑克松紀錄.html' },
+        { key: 'ding_poc', link: 'http://localhost:3000' },
       ];
 
       // i18n dictionary
@@ -98,13 +325,17 @@
           headingSub: '以下為本資料夾的重點原型與頁面。',
           footer: '清單可依需求持續擴充與調整。',
           open: '開啟頁面',
+          copyright: '© 2025 AI POC 專案導航平台. 保留所有權利.',
+          copyrightDesc: '次世代 AI 人力資源管理原型與概念驗證平台',
+          versionInfo: '版本 v1.0.0 | 最後更新: 2025年9月8日',
           items: {
-            hr_core: { title: 'HR 核心任務', desc: 'HR 核心職能、流程與重點任務。' },
-            ux_report: { title: '易用性報告', desc: '易用性研究洞見、痛點與優化建議。' },
-            feedback: { title: '金豬反饋', desc: '專案回饋彙整與後續追蹤。' },
-            ai_partner: { title: '智能夥伴', desc: 'AI 智能夥伴示範與使用範例。' },
-            scheduling: { title: '排班', desc: '人力排程、班表與規則設定。' },
-            hackathon_log: { title: '黑克松紀錄', desc: '黑客松紀錄、議程與產出。' },
+            hr_core: { title: 'HR Co-Agents 框架', desc: '次世代 HR 平台的 AI 互動設計框架，展示四種 AI 專家角色協作模式與人機互動原型。' },
+            ux_report: { title: '金豬食堂 UX 報告', desc: 'AI 智慧排班系統易用性測試完整報告，涵蓋 SUS 評分、痛點分析與改善建議。' },
+            feedback: { title: '金豬反饋整合', desc: '金豬食堂專案多維度回饋整合，包含使用者體驗、功能需求與系統優化建議。' },
+            ai_partner: { title: 'AI 智能助手', desc: '新一代 AI 智能助手互動原型，展示自然語言對話與任務協作能力。' },
+            scheduling: { title: 'Apollo AI 排班系統', desc: '績效價值導向的智能排班原型，支援複雜規則設定、員工偏好管理與 AI 自動排班。' },
+            hackathon_log: { title: 'AI 驅動黑客松', desc: 'AI 驅動黑客松完整學習歷程，包含創新方法論、實作經驗與行動劇本。' },
+            ding_poc: { title: '釘釘-Apollo 集成', desc: '釘釘智能人事 API 與 Apollo 系統深度集成 POC，包含員工數據同步、ETL 處理與可視化介面。' },
           },
         },
         'zh-CN': {
@@ -113,13 +344,17 @@
           headingSub: '以下为本文件夹的重点原型与页面。',
           footer: '清单可按需持续扩充与调整。',
           open: '打开页面',
+          copyright: '© 2025 AI POC 项目导航平台. 保留所有权利.',
+          copyrightDesc: '次世代 AI 人力资源管理原型与概念验证平台',
+          versionInfo: '版本 v1.0.0 | 最后更新: 2025年9月8日',
           items: {
-            hr_core: { title: 'HR 核心任务', desc: 'HR 核心职能、流程与重点任务。' },
-            ux_report: { title: '易用性报告', desc: '易用性研究洞见、痛点与优化建议。' },
-            feedback: { title: '金猪反馈', desc: '项目反馈汇总与后续跟进。' },
-            ai_partner: { title: '智能伙伴', desc: 'AI 智能伙伴示范与使用范例。' },
-            scheduling: { title: '排班', desc: '人力排程、班表与规则设置。' },
-            hackathon_log: { title: '黑客松记录', desc: '黑客松记录、议程与产出。' },
+            hr_core: { title: 'HR Co-Agents 框架', desc: '次世代 HR 平台的 AI 交互设计框架，展示四种 AI 专家角色协作模式与人机交互原型。' },
+            ux_report: { title: '金猪食堂 UX 报告', desc: 'AI 智慧排班系统易用性测试完整报告，涵盖 SUS 评分、痛点分析与改善建议。' },
+            feedback: { title: '金猪反馈整合', desc: '金猪食堂专案多维度反馈整合，包含使用者体验、功能需求与系统优化建议。' },
+            ai_partner: { title: 'AI 智能助手', desc: '新一代 AI 智能助手交互原型，展示自然语言对话与任务协作能力。' },
+            scheduling: { title: 'Apollo AI 排班系统', desc: '绩效价值导向的智能排班原型，支持复杂规则设定、员工偏好管理与 AI 自动排班。' },
+            hackathon_log: { title: 'AI 驱动黑客松', desc: 'AI 驱动黑客松完整学习历程，包含创新方法论、实作经验与行动剧本。' },
+            ding_poc: { title: '钉钉-Apollo 集成', desc: '钉钉智能人事 API 与 Apollo 系统深度集成 POC，包含员工数据同步、ETL 处理与可视化界面。' },
           },
         },
         'en': {
@@ -128,13 +363,17 @@
           headingSub: 'Curated prototypes and pages in this folder.',
           footer: 'Keep this list evolving as the work grows.',
           open: 'Open Page',
+          copyright: '© 2025 AI POC Navigation Platform. All rights reserved.',
+          copyrightDesc: 'Next-generation AI human resource management prototypes and proof-of-concept platform',
+          versionInfo: 'Version v1.0.0 | Last updated: Sep 8, 2025',
           items: {
-            hr_core: { title: 'HR Core Tasks', desc: 'HR capabilities, processes, and key tasks.' },
-            ux_report: { title: 'Usability Report', desc: 'Research insights, pain points, and improvements.' },
-            feedback: { title: 'Golden Pig Feedback', desc: 'Consolidated feedback and follow-ups.' },
-            ai_partner: { title: 'Smart Assistant', desc: 'AI assistant demo with sample use cases.' },
-            scheduling: { title: 'Scheduling', desc: 'Workforce rostering, shifts, and rules.' },
-            hackathon_log: { title: 'Hackathon Log', desc: 'Notes, agenda, and deliverables.' },
+            hr_core: { title: 'HR Co-Agents Framework', desc: 'Next-gen HR platform AI interaction framework showcasing four AI expert roles collaboration and human-AI interaction prototypes.' },
+            ux_report: { title: 'Golden Pig UX Report', desc: 'Complete usability testing report for AI scheduling system, including SUS scores, pain point analysis, and improvement recommendations.' },
+            feedback: { title: 'Golden Pig Integration', desc: 'Multi-dimensional Golden Pig project feedback integration, including user experience, feature requirements, and system optimization suggestions.' },
+            ai_partner: { title: 'AI Smart Assistant', desc: 'Next-generation AI smart assistant interaction prototype demonstrating natural language dialogue and task collaboration capabilities.' },
+            scheduling: { title: 'Apollo AI Scheduling', desc: 'Performance-value-driven intelligent scheduling prototype supporting complex rule configuration, employee preference management, and AI automation.' },
+            hackathon_log: { title: 'AI-Driven Hackathon', desc: 'Complete AI-driven hackathon learning journey including innovative methodologies, hands-on experience, and action playbooks.' },
+            ding_poc: { title: 'DingTalk-Apollo Integration', desc: 'Deep integration POC between DingTalk Smart HR API and Apollo system, featuring employee data sync, ETL processing, and visualization interface.' },
           },
         },
       };
@@ -156,6 +395,15 @@
         document.getElementById('heading-title').textContent = dict[active].headingTitle;
         document.getElementById('heading-sub').textContent = dict[active].headingSub;
         document.getElementById('footer-note').textContent = dict[active].footer;
+        
+        // 更新版權聲明
+        const copyrightText = document.querySelector('.copyright-text');
+        const copyrightDesc = document.getElementById('copyright-desc');
+        const versionInfo = document.getElementById('version-info');
+        
+        if (copyrightText) copyrightText.textContent = dict[active].copyright;
+        if (copyrightDesc) copyrightDesc.textContent = dict[active].copyrightDesc;
+        if (versionInfo) versionInfo.textContent = dict[active].versionInfo;
 
         // Toggle pressed state on language buttons
         document.querySelectorAll('.lang button').forEach(btn => {
