@@ -13,10 +13,8 @@ const port = process.env.BACKEND_PORT || 8000;
 
 // 中间件
 app.use(helmet());
-app.use(cors({
-  origin: `http://localhost:${process.env.FRONTEND_PORT || 3000}`,
-  credentials: true
-}));
+// 允許從本地靜態頁面(file://)與各本地端口請求（僅開發用）
+app.use(cors());
 app.use(morgan('combined'));
 app.use(express.json());
 

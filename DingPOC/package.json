@@ -4,6 +4,9 @@
   "description": "钉钉员工数据集成Apollo系统POC",
   "main": "index.js",
   "scripts": {
+    "start:poc": "node scripts/start-poc.js",
+    "serve:static": "node scripts/static-server.js",
+    "start:static": "node scripts/start-static.js",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm start",
     "dev:all": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
