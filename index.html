@@ -430,7 +430,7 @@
 
           const a = document.createElement('a');
           a.textContent = dict[active].open;
-          a.href = encodeURI(p.link);
+          a.href = encodeURI(p.dynamicLink || p.link);
           a.rel = 'noopener noreferrer';
           a.target = '_blank';
           card.appendChild(a);
